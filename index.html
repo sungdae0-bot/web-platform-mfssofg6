@@ -1,0 +1,1212 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BS Investment Committee Platform V8.5</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js" defer></script>
+    
+    <style>
+        body { background-color: #f4f6f9; font-family: 'Pretendard', 'Noto Sans KR', sans-serif; }
+        .container { max-width: 1100px; margin-top: 30px; margin-bottom: 50px; }
+        .card { border: none; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 20px; }
+        .radar-chart-container { position: relative; height: 400px; width: 100%; }
+        .hidden { display: none !important; }
+        
+        .table th, .table td { 
+            white-space: nowrap; 
+            vertical-align: middle;
+            text-align: center;
+        }
+        .table th { 
+            background-color: #f8f9fa; 
+            font-weight: 700; 
+            color: #495057; 
+            border-bottom: 2px solid #dee2e6; 
+            padding: 15px 10px;
+        }
+        .table td { 
+            padding: 12px 10px; 
+            border-bottom: 1px solid #e9ecef; 
+        }
+
+        /* 관리 탭 컬럼 너비 */
+        .col-type  { width: 12%; }
+        .col-name  { width: 38%; }
+        .col-date  { width: 14%; }
+        .col-status { width: 36%; }
+
+        /* 이력 탭 푸터 행 */
+        .table tfoot td {
+            background-color: #f1f3f5;
+            font-weight: 700;
+            color: #343a40;
+            border-top: 2px solid #dee2e6;
+            padding: 12px 10px;
+        }
+
+        /* 필터 패널 */
+        .filter-panel {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 10px;
+            padding: 16px 20px;
+            margin-bottom: 16px;
+        }
+        .filter-panel .filter-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            align-items: flex-end;
+        }
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .filter-group label {
+            font-size: 0.78rem;
+            font-weight: 700;
+            color: #495057;
+            margin-bottom: 2px;
+        }
+        .filter-group input[type="date"],
+        .filter-group input[type="number"] {
+            font-size: 0.85rem;
+            padding: 4px 8px;
+            height: 34px;
+            border: 1px solid #ced4da;
+            border-radius: 6px;
+            width: 130px;
+        }
+        .filter-check-group {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .filter-check-group .form-check {
+            margin: 0;
+        }
+        .filter-range-wrap {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .filter-range-wrap span {
+            font-size: 0.8rem;
+            color: #6c757d;
+        }
+        .btn-filter-reset {
+            font-size: 0.82rem;
+            padding: 5px 14px;
+            height: 34px;
+            align-self: flex-end;
+        }
+
+        /* 투자진행 배지 */
+        .invest-proceed  { color: #0d6efd; font-weight: 700; }
+        .invest-noproceed { color: #dc3545; font-weight: 700; }
+
+        /* 모니터링 투자진행 버튼 영역 */
+        .invest-status-bar {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 16px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .feedback-box { background: #fff; border: 1px solid #e9ecef; border-radius: 8px; padding: 12px; margin-bottom: 8px; border-left: 4px solid #0d6efd; box-shadow: 0 1px 2px rgba(0,0,0,0.02); }
+        .feedback-box.cons { border-left-color: #dc3545; }
+        .feedback-box.syn { border-left-color: #198754; }
+        .score-list-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #f1f3f5; }
+        .score-list-item:last-child { border-bottom: none; }
+        .score-detail { font-size: 0.8rem; color: #6c757d; margin-left: 5px; }
+        .total-score { font-size: 1.8rem; font-weight: bold; color: #0d6efd; text-align: center; margin-bottom: 5px; }
+        .chart-controls label { font-size: 0.85rem; margin-right: 15px; cursor: pointer; }
+        #loading-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,1); z-index: 9999; display: flex; justify-content: center; align-items: center; flex-direction: column; transition: opacity 0.5s ease; }
+        #global-error-msg { color: red; margin-top: 20px; font-weight: bold; text-align: center; padding: 20px; }
+    </style>
+</head>
+<body>
+
+<div id="loading-overlay">
+    <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Loading...</span>
+    </div>
+    <div id="global-error-msg"></div>
+</div>
+
+<nav id="navbar" class="navbar navbar-expand-lg navbar-light bg-white shadow-sm hidden">
+    <div class="container-fluid">
+        <span class="navbar-brand fw-bold ms-3">🏛️ BS Investment Committee</span>
+        <div class="d-flex align-items-center me-3">
+            <span id="user-display-name" class="me-3 fw-bold text-primary"></span>
+            <button id="btn-settings" class="btn btn-outline-secondary btn-sm me-2" title="이름 변경"><i class="fas fa-cog"></i></button>
+            <button id="btn-home" class="btn btn-outline-secondary btn-sm me-2"><i class="fas fa-home"></i> 홈</button>
+            <button id="btn-logout" class="btn btn-outline-danger btn-sm">로그아웃</button>
+        </div>
+    </div>
+</nav>
+
+<div class="container">
+
+    <!-- 로그인 -->
+    <div id="login-section" class="hidden">
+        <div class="row justify-content-center align-items-center" style="height: 80vh;">
+            <div class="col-md-5">
+                <div class="card p-5">
+                    <div class="text-center mb-4">
+                        <h3 class="fw-bold">Login</h3>
+                        <p class="text-muted small">투자심의 플랫폼 (Firebase Auth)</p>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">이메일 (ID)</label>
+                        <input type="text" id="login-email" class="form-control" placeholder="이메일 입력 (관리자: admin)">
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">비밀번호 (Password)</label>
+                        <input type="password" id="login-pw" class="form-control" placeholder="비밀번호">
+                    </div>
+                    <button id="btn-login-action" class="btn btn-primary w-100 py-2 fw-bold">로그인</button>
+                    <p id="login-error" class="text-danger text-center mt-3 small"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 이름 설정 모달 -->
+    <div class="modal fade" id="nameSettingModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold">👋 환영합니다!</h5>
+                </div>
+                <div class="modal-body">
+                    <p class="text-muted">사용할 이름을 입력해주세요.<br>(최초 1회만 입력)</p>
+                    <input type="text" id="input-display-name" class="form-control" placeholder="예: 홍길동">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary w-100" id="btn-save-name">시작하기</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 관리자 대시보드 -->
+    <div id="admin-dashboard" class="hidden">
+        <h4 class="mb-3">관리자 대시보드</h4>
+        
+        <div class="card p-4 mb-4">
+            <h5>➕ 신규 안건 등록</h5>
+            <div class="row g-2">
+                <div class="col-md-3">
+                    <select id="new-type" class="form-select">
+                        <option value="startup">Startup</option>
+                        <option value="fund">Fund</option>
+                    </select>
+                </div>
+                <div class="col-md-7"><input type="text" id="new-name" class="form-control" placeholder="기업명 또는 펀드명"></div>
+                <div class="col-md-2"><button id="btn-create-session" class="btn btn-success w-100">등록</button></div>
+            </div>
+        </div>
+
+        <ul class="nav nav-tabs mb-3">
+            <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-manage">📋 평가 관리</button></li>
+            <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-history">🗄️ 과거 심사 이력</button></li>
+        </ul>
+        
+        <div class="tab-content">
+            <!-- 평가 관리 탭 -->
+            <div class="tab-pane fade show active" id="tab-manage">
+                <div class="card p-3">
+                    <div class="d-flex justify-content-end mb-2">
+                        <button id="btn-toggle-edit-mode" class="btn btn-sm btn-outline-secondary"><i class="fas fa-tools"></i> 목록 편집 (순서/삭제)</button>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th style="width:6%;">#</th>
+                                    <th class="col-type">구분</th>
+                                    <th class="col-name">안건명</th>
+                                    <th class="col-date">등록일</th>
+                                    <th class="col-status" id="th-status-title">관리 및 결과</th>
+                                </tr>
+                            </thead>
+                            <tbody id="admin-session-list"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 과거 심사 이력 탭 -->
+            <div class="tab-pane fade" id="tab-history">
+                <div class="card p-3">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="mb-0">전체 투자 건 리스트</h5>
+                        <div class="d-flex gap-2">
+                            <button id="btn-toggle-filter" class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-filter"></i> 필터
+                            </button>
+                            <button id="btn-excel-download" class="btn btn-sm btn-outline-success">
+                                📊 엑셀 다운로드
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 필터 패널 -->
+                    <div id="filter-panel" class="filter-panel hidden">
+                        <div class="filter-row">
+
+                            <!-- Type 필터 -->
+                            <div class="filter-group">
+                                <label>Type</label>
+                                <div class="filter-check-group">
+                                    <div class="form-check">
+                                        <input class="form-check-input filter-type" type="checkbox" value="startup" id="flt-startup" checked>
+                                        <label class="form-check-label small" for="flt-startup">Startup</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input filter-type" type="checkbox" value="fund" id="flt-fund" checked>
+                                        <label class="form-check-label small" for="flt-fund">Fund</label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Date 필터 -->
+                            <div class="filter-group">
+                                <label>Date (등록일 범위)</label>
+                                <div class="filter-range-wrap">
+                                    <input type="date" id="flt-date-from">
+                                    <span>~</span>
+                                    <input type="date" id="flt-date-to">
+                                </div>
+                            </div>
+
+                            <!-- 참여 필터 -->
+                            <div class="filter-group">
+                                <label>참여 인원 (명)</label>
+                                <div class="filter-range-wrap">
+                                    <input type="number" id="flt-part-min" placeholder="최소" min="0">
+                                    <span>~</span>
+                                    <input type="number" id="flt-part-max" placeholder="최대" min="0">
+                                </div>
+                            </div>
+
+                            <!-- 종합점수 필터 -->
+                            <div class="filter-group">
+                                <label>종합점수 (0 ~ 5)</label>
+                                <div class="filter-range-wrap">
+                                    <input type="number" id="flt-score-min" placeholder="최소" min="0" max="5" step="0.1">
+                                    <span>~</span>
+                                    <input type="number" id="flt-score-max" placeholder="최대" min="0" max="5" step="0.1">
+                                </div>
+                            </div>
+
+                            <!-- 상태 필터 -->
+                            <div class="filter-group">
+                                <label>상태</label>
+                                <div class="filter-check-group">
+                                    <div class="form-check">
+                                        <input class="form-check-input filter-status" type="checkbox" value="ongoing" id="flt-ongoing" checked>
+                                        <label class="form-check-label small" for="flt-ongoing">진행중</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input filter-status" type="checkbox" value="done" id="flt-done" checked>
+                                        <label class="form-check-label small" for="flt-done">완료</label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 초기화 버튼 -->
+                            <button id="btn-filter-reset" class="btn btn-sm btn-outline-secondary btn-filter-reset">
+                                <i class="fas fa-undo"></i> 초기화
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle" id="history-table">
+                            <thead>
+                                <tr>
+                                    <th style="width:5%;">#</th>
+                                    <th style="width:9%;">Type</th>
+                                    <th>Name</th>
+                                    <th style="width:11%;">Date</th>
+                                    <th style="width:8%;">참여</th>
+                                    <th style="width:10%;">종합점수</th>
+                                    <th style="width:10%;">투자진행</th>
+                                    <th style="width:9%;">상태</th>
+                                </tr>
+                            </thead>
+                            <tbody id="admin-history-list"></tbody>
+                            <tfoot id="admin-history-footer"></tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 관리자 모니터링 -->
+    <div id="admin-monitoring" class="hidden">
+        <button id="btn-monitor-back" class="btn btn-secondary mb-3"><i class="fas fa-arrow-left"></i> 목록으로</button>
+        <div class="card p-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h4 id="monitor-title" class="fw-bold"></h4>
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="anon-toggle">
+                    <label class="form-check-label" for="anon-toggle">익명으로 보기</label>
+                </div>
+            </div>
+
+            <!-- 투자진행 여부 설정 바 -->
+            <div class="invest-status-bar">
+                <span class="fw-bold me-2">📌 투자진행 여부:</span>
+                <button id="btn-invest-proceed" class="btn btn-sm btn-outline-primary">✅ 진행</button>
+                <button id="btn-invest-noproceed" class="btn btn-sm btn-outline-danger">❌ 미진행</button>
+                <button id="btn-invest-clear" class="btn btn-sm btn-outline-secondary">— 미설정</button>
+                <span id="invest-status-label" class="ms-3 fw-bold fs-6"></span>
+            </div>
+
+            <div class="row mb-5">
+                <div class="col-md-8">
+                    <div class="radar-chart-container"><canvas id="adminChart"></canvas></div>
+                    <div class="mt-3 p-3 bg-light rounded chart-controls" id="chart-users-toggle"></div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card bg-light h-100">
+                        <div class="card-body">
+                            <h5 class="card-title text-center mb-2">종합 평가 점수</h5>
+                            <div class="total-score" id="total-score-display">0.0</div>
+                            <p class="text-center text-muted small mb-4">All Score Average</p>
+                            <hr>
+                            <h6 class="text-muted mb-3">항목별 상세 점수</h6>
+                            <div id="score-breakdown-list" class="small"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-4"><h6 class="text-primary fw-bold">👍 투자해야 하는 이유</h6><div id="fb-pros-list"></div></div>
+                <div class="col-md-4"><h6 class="text-danger fw-bold">⚠️ 주요 우려사항</h6><div id="fb-cons-list"></div></div>
+                <div class="col-md-4"><h6 class="text-success fw-bold">🤝 기대되는 시너지 효과</h6><div id="fb-syn-list"></div></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- IC 대시보드 -->
+    <div id="ic-dashboard" class="hidden">
+        <h4 class="mb-3">심사 대상 목록</h4>
+        <div class="card p-3"><div class="list-group" id="ic-session-list"></div></div>
+    </div>
+
+    <!-- IC 평가 화면 -->
+    <div id="ic-evaluation" class="hidden">
+        <button id="btn-eval-back" class="btn btn-secondary mb-3"><i class="fas fa-arrow-left"></i> 목록으로</button>
+        <div class="card p-4">
+            <h4 id="eval-title" class="fw-bold mb-4"></h4>
+            <h5 class="mb-3 border-bottom pb-2">📊 항목별 평가</h5>
+            <div id="criteria-inputs" class="mb-5"></div>
+            <h5 class="mb-3 border-bottom pb-2">📝 투자 관련 의견</h5>
+            <div class="mb-3"><label class="fw-bold">1. 투자 해야하는 이유</label><textarea id="comment-pros" class="form-control" rows="2"></textarea></div>
+            <div class="mb-3"><label class="fw-bold">2. 주요 우려사항</label><textarea id="comment-cons" class="form-control" rows="2"></textarea></div>
+            <div class="mb-3"><label class="fw-bold">3. 기대되는 시너지 효과</label><textarea id="comment-synergy" class="form-control" rows="2"></textarea></div>
+            <button id="btn-submit-eval" class="btn btn-primary w-100 py-2 fs-5">평가 제출</button>
+        </div>
+    </div>
+</div>
+
+<script type="module">
+    window.onerror = function(message, source, lineno, colno, error) {
+        document.getElementById('loading-overlay').classList.remove('hidden');
+        document.getElementById('global-error-msg').innerText = "오류 발생: " + message;
+        console.error(error);
+    };
+
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+    import { getDatabase, ref, set, push, onValue, update, remove } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js";
+    import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut, updateProfile } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyCjawYoNR9zABRyr9q9hW_-cd2PntgA_Zs",
+        authDomain: "bs-investement-committee.firebaseapp.com",
+        databaseURL: "https://bs-investement-committee-default-rtdb.firebaseio.com",
+        projectId: "bs-investement-committee",
+        storageBucket: "bs-investement-committee.firebasestorage.app",
+        messagingSenderId: "1019720410388",
+        appId: "1:1019720410388:web:ac46ca0740ec2b597ace01"
+    };
+
+    try {
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+        const auth = getAuth(app);
+
+        let currentUser      = null;
+        let currentUserName  = "";
+        let currentRole      = "";
+        let currentSessionId = "";
+        let sessionsData     = {};
+        let myRadarChart     = null;
+        let selectedUsersForChart = [];
+        let nameModal        = null;
+        let isEditMode       = false;
+
+        // ── 현재 필터 상태 ──────────────────────────────────────────────
+        let filterState = {
+            types:    ['startup', 'fund'],
+            dateFrom: '',
+            dateTo:   '',
+            partMin:  '',
+            partMax:  '',
+            scoreMin: '',
+            scoreMax: '',
+            statuses: ['ongoing', 'done']
+        };
+
+        const criteria = {
+            startup: ["팀 역량", "시장성", "기술 해자", "사업성/BM", "회수 가능성", "전략적 정합성"],
+            fund:    ["GP 역량", "운용 전략", "수익/회수", "네트워크", "정보/인사이트", "전략적 정합성"]
+        };
+
+        // ── 초기화 ──────────────────────────────────────────────────────
+        function initApp() {
+            bindClick('btn-login-action',     performLogin);
+            bindClick('btn-logout',           performLogout);
+            bindClick('btn-settings',         openNameSettings);
+            bindClick('btn-home',             goHome);
+            bindClick('btn-save-name',        saveUserName);
+            bindClick('btn-create-session',   createSession);
+            bindClick('btn-monitor-back',     goHome);
+            bindClick('btn-eval-back',        goHome);
+            bindClick('btn-submit-eval',      submitEvaluation);
+            bindClick('btn-excel-download',   downloadExcel);
+            bindClick('btn-toggle-edit-mode', toggleEditMode);
+
+            // 필터 토글 / 초기화
+            bindClick('btn-toggle-filter', () => {
+                document.getElementById('filter-panel').classList.toggle('hidden');
+            });
+            bindClick('btn-filter-reset', resetFilter);
+
+            // 필터 입력 이벤트
+            document.querySelectorAll('.filter-type, .filter-status').forEach(el =>
+                el.addEventListener('change', onFilterChange)
+            );
+            ['flt-date-from','flt-date-to','flt-part-min','flt-part-max',
+             'flt-score-min','flt-score-max'].forEach(id => {
+                const el = document.getElementById(id);
+                if(el) el.addEventListener('input', onFilterChange);
+            });
+
+            // 투자진행 버튼
+            bindClick('btn-invest-proceed',   () => setInvestStatus('proceed'));
+            bindClick('btn-invest-noproceed', () => setInvestStatus('noproceed'));
+            bindClick('btn-invest-clear',     () => setInvestStatus(null));
+
+            const pwInput = document.getElementById('login-pw');
+            if(pwInput) pwInput.addEventListener('keypress', e => { if(e.key === 'Enter') performLogin(); });
+
+            const anonToggle = document.getElementById('anon-toggle');
+            if(anonToggle) anonToggle.addEventListener('change', refreshMonitorView);
+
+            onAuthStateChanged(auth, (user) => {
+                document.getElementById('loading-overlay').classList.add('hidden');
+                if(!nameModal && window.bootstrap)
+                    nameModal = new bootstrap.Modal(document.getElementById('nameSettingModal'));
+
+                if (user) {
+                    currentUser = user;
+                    if(user.email.startsWith("admin@")) {
+                        currentRole = 'admin';
+                        currentUserName = "관리자";
+                    } else {
+                        currentRole = 'ic';
+                        currentUserName = user.displayName;
+                    }
+                    updateUserDisplay();
+                    document.getElementById('navbar').classList.remove('hidden');
+                    document.getElementById('login-section').classList.add('hidden');
+                    if(currentRole === 'ic' && !user.displayName) {
+                        if(nameModal) nameModal.show();
+                    } else {
+                        goHome();
+                        syncData();
+                    }
+                } else {
+                    document.getElementById('navbar').classList.add('hidden');
+                    hideAllSections();
+                    document.getElementById('login-section').classList.remove('hidden');
+                }
+            });
+        }
+
+        initApp();
+
+        // ── 유틸 ────────────────────────────────────────────────────────
+        function bindClick(id, func) {
+            const el = document.getElementById(id);
+            if(el) el.addEventListener('click', func);
+        }
+
+        function calcSessionAvg(s) {
+            const evals = s.evaluations || {};
+            const count = Object.keys(evals).length;
+            if(count === 0) return null;
+            let grandSum = 0, itemCount = 0;
+            for(let u in evals) evals[u].scores.forEach(v => { grandSum += v; itemCount++; });
+            return itemCount > 0 ? parseFloat((grandSum / itemCount).toFixed(1)) : null;
+        }
+
+        // ── 필터 ────────────────────────────────────────────────────────
+        function onFilterChange() {
+            filterState.types    = [...document.querySelectorAll('.filter-type:checked')].map(e => e.value);
+            filterState.statuses = [...document.querySelectorAll('.filter-status:checked')].map(e => e.value);
+            filterState.dateFrom = document.getElementById('flt-date-from').value;
+            filterState.dateTo   = document.getElementById('flt-date-to').value;
+            filterState.partMin  = document.getElementById('flt-part-min').value;
+            filterState.partMax  = document.getElementById('flt-part-max').value;
+            filterState.scoreMin = document.getElementById('flt-score-min').value;
+            filterState.scoreMax = document.getElementById('flt-score-max').value;
+            renderAdminList();
+        }
+
+        function resetFilter() {
+            // 체크박스 전체 복원
+            document.querySelectorAll('.filter-type, .filter-status').forEach(el => el.checked = true);
+            ['flt-date-from','flt-date-to','flt-part-min','flt-part-max',
+             'flt-score-min','flt-score-max'].forEach(id => {
+                const el = document.getElementById(id);
+                if(el) el.value = '';
+            });
+            filterState = {
+                types: ['startup','fund'], dateFrom:'', dateTo:'',
+                partMin:'', partMax:'', scoreMin:'', scoreMax:'',
+                statuses: ['ongoing','done']
+            };
+            renderAdminList();
+        }
+
+        function applyFilter(keys) {
+            return keys.filter(key => {
+                const s = sessionsData[key];
+                if(!s) return false;
+
+                // Type
+                if(!filterState.types.includes(s.type)) return false;
+
+                // Date
+                if(filterState.dateFrom) {
+                    const from = new Date(filterState.dateFrom).getTime();
+                    if(s.createdAt < from) return false;
+                }
+                if(filterState.dateTo) {
+                    // 해당 날 끝(23:59:59)까지 포함
+                    const to = new Date(filterState.dateTo).getTime() + 86399999;
+                    if(s.createdAt > to) return false;
+                }
+
+                // 참여 인원
+                const count = s.evaluations ? Object.keys(s.evaluations).length : 0;
+                if(filterState.partMin !== '' && count < parseInt(filterState.partMin)) return false;
+                if(filterState.partMax !== '' && count > parseInt(filterState.partMax)) return false;
+
+                // 종합점수
+                const avg = calcSessionAvg(s);
+                const avgVal = avg !== null ? avg : 0;
+                if(filterState.scoreMin !== '' && avgVal < parseFloat(filterState.scoreMin)) return false;
+                if(filterState.scoreMax !== '' && avgVal > parseFloat(filterState.scoreMax)) return false;
+
+                // 상태
+                const statusVal = s.isVisible ? 'ongoing' : 'done';
+                if(!filterState.statuses.includes(statusVal)) return false;
+
+                return true;
+            });
+        }
+
+        // ── 투자진행 설정 ───────────────────────────────────────────────
+        function setInvestStatus(status) {
+            if(!currentSessionId) return;
+            update(ref(db, `sessions/${currentSessionId}`), { investStatus: status })
+                .then(() => renderInvestStatusLabel(status))
+                .catch(err => alert("저장 실패: " + err.message));
+        }
+
+        function renderInvestStatusLabel(status) {
+            const label = document.getElementById('invest-status-label');
+            if(status === 'proceed') {
+                label.innerHTML = '<span class="invest-proceed">● 진행</span>';
+            } else if(status === 'noproceed') {
+                label.innerHTML = '<span class="invest-noproceed">● 미진행</span>';
+            } else {
+                label.innerHTML = '<span class="text-muted">미설정</span>';
+            }
+        }
+
+        // ── 엑셀 다운로드 ───────────────────────────────────────────────
+        function downloadExcel() {
+            if(!sessionsData || Object.keys(sessionsData).length === 0)
+                return alert("다운로드할 데이터가 없습니다.");
+            const exportData = [];
+            const sortedKeys = getSortedKeys();
+            const filteredKeys = applyFilter(sortedKeys);
+
+            filteredKeys.forEach((key, idx) => {
+                const s = sessionsData[key];
+                const date  = new Date(s.createdAt).toLocaleDateString();
+                const count = s.evaluations ? Object.keys(s.evaluations).length : 0;
+                const avg   = calcSessionAvg(s);
+                const investLabel = s.investStatus === 'proceed' ? '진행'
+                                  : s.investStatus === 'noproceed' ? '미진행' : '-';
+                exportData.push({
+                    "#": idx + 1,
+                    "구분":     s.type.toUpperCase(),
+                    "안건명":   s.name,
+                    "등록일":   date,
+                    "참여 인원": count + "명",
+                    "종합 점수": avg !== null ? avg : "0.0",
+                    "투자진행":  investLabel,
+                    "상태":      s.isVisible ? "진행중" : "완료"
+                });
+            });
+
+            const worksheet = XLSX.utils.json_to_sheet(exportData);
+            const workbook  = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "심사 이력");
+            const today = new Date().toISOString().slice(0,10);
+            XLSX.writeFile(workbook, `투자심사이력_${today}.xlsx`);
+        }
+
+        // ── 로그인/아웃 ─────────────────────────────────────────────────
+        async function performLogin() {
+            let email = document.getElementById('login-email').value.trim();
+            const pw  = document.getElementById('login-pw').value;
+            const errorMsg = document.getElementById('login-error');
+            errorMsg.innerText = "";
+            if(!email || !pw) return alert("입력값을 확인해주세요.");
+            if(email === 'admin') email = 'admin@bs-invest.com';
+            document.getElementById('loading-overlay').classList.remove('hidden');
+            try {
+                await signInWithEmailAndPassword(auth, email, pw);
+            } catch (error) {
+                document.getElementById('loading-overlay').classList.add('hidden');
+                let msg = "로그인 실패: ";
+                if(error.code === 'auth/user-not-found')   msg += "계정 없음";
+                else if(error.code === 'auth/wrong-password') msg += "비밀번호 오류";
+                else msg += error.message;
+                errorMsg.innerText = msg;
+            }
+        }
+
+        function performLogout() { signOut(auth).then(() => location.reload()); }
+
+        function saveUserName() {
+            const inputName = document.getElementById('input-display-name').value.trim();
+            if(!inputName) return alert("이름을 입력해주세요.");
+            updateProfile(auth.currentUser, { displayName: inputName }).then(() => {
+                currentUserName = inputName;
+                updateUserDisplay();
+                if(nameModal) nameModal.hide();
+                goHome();
+                syncData();
+            });
+        }
+
+        function openNameSettings() {
+            if(currentRole === 'admin') return alert("관리자는 이름 변경 불가");
+            document.getElementById('input-display-name').value = currentUserName || "";
+            if(nameModal) nameModal.show();
+        }
+
+        function updateUserDisplay() {
+            const display = document.getElementById('user-display-name');
+            if(currentRole === 'admin') {
+                display.innerText = `👤 관리자 (Admin)`;
+                display.classList.remove('text-primary'); display.classList.add('text-danger');
+            } else {
+                display.innerText = `👤 ${currentUserName} 위원`;
+                display.classList.remove('text-danger'); display.classList.add('text-primary');
+            }
+        }
+
+        function goHome() {
+            hideAllSections();
+            if(currentRole === 'admin') document.getElementById('admin-dashboard').classList.remove('hidden');
+            else                        document.getElementById('ic-dashboard').classList.remove('hidden');
+        }
+
+        function hideAllSections() {
+            ['login-section','admin-dashboard','admin-monitoring','ic-dashboard','ic-evaluation']
+                .forEach(sid => document.getElementById(sid).classList.add('hidden'));
+        }
+
+        function syncData() {
+            const sessionsRef = ref(db, 'sessions');
+            onValue(sessionsRef, (snapshot) => {
+                sessionsData = snapshot.val() || {};
+                if(currentRole === 'admin') {
+                    renderAdminList();
+                    if(!document.getElementById('admin-monitoring').classList.contains('hidden') && currentSessionId)
+                        loadMonitorData(currentSessionId);
+                } else {
+                    renderIcList();
+                }
+            });
+        }
+
+        function getSortedKeys() {
+            return Object.keys(sessionsData).sort((a, b) => {
+                const oA = sessionsData[a].order !== undefined ? sessionsData[a].order : 0;
+                const oB = sessionsData[b].order !== undefined ? sessionsData[b].order : 0;
+                if(oA !== oB) return oA - oB;
+                return sessionsData[b].createdAt - sessionsData[a].createdAt;
+            });
+        }
+
+        // ── 관리자 목록 렌더 ────────────────────────────────────────────
+        function renderAdminList() {
+            const listBody    = document.getElementById('admin-session-list');
+            const historyBody = document.getElementById('admin-history-list');
+            const historyFoot = document.getElementById('admin-history-footer');
+            listBody.innerHTML = ""; historyBody.innerHTML = ""; historyFoot.innerHTML = "";
+
+            const sortedKeys   = getSortedKeys();
+            const filteredKeys = applyFilter(sortedKeys);
+
+            // ── 평가 관리 탭 (필터 미적용 — 전체 표시) ─────────────────
+            if(sortedKeys.length === 0) {
+                listBody.innerHTML = "<tr><td colspan='5' class='text-center p-3'>데이터 없음</td></tr>";
+            } else {
+                sortedKeys.forEach((key, index) => {
+                    const s    = sessionsData[key];
+                    const date = new Date(s.createdAt).toLocaleDateString();
+                    const tr   = document.createElement('tr');
+
+                    let actionHtml = '';
+                    if(isEditMode) {
+                        actionHtml = `
+                            <button class="btn btn-sm btn-outline-secondary btn-move-up me-1" data-index="${index}" title="위로"><i class="fas fa-arrow-up"></i></button>
+                            <button class="btn btn-sm btn-outline-secondary btn-move-down me-1" data-index="${index}" title="아래로"><i class="fas fa-arrow-down"></i></button>
+                            <button class="btn btn-sm btn-outline-danger btn-delete ms-2" data-key="${key}" title="삭제"><i class="fas fa-trash"></i></button>
+                        `;
+                    } else {
+                        actionHtml = `
+                            <div class="d-flex align-items-center justify-content-center gap-2">
+                                <div class="form-check form-switch m-0">
+                                    <input class="form-check-input toggle-visible" type="checkbox" data-key="${key}" ${s.isVisible ? 'checked' : ''}>
+                                    <label class="form-check-label small text-nowrap" style="min-width:30px;">${s.isVisible ? '공개' : '숨김'}</label>
+                                </div>
+                                <div class="vr"></div>
+                                <button class="btn btn-sm btn-dark btn-monitor text-nowrap" data-key="${key}">결과</button>
+                            </div>
+                        `;
+                    }
+
+                    tr.innerHTML = `
+                        <td class="text-muted">${index + 1}</td>
+                        <td><span class="badge bg-${s.type === 'startup' ? 'primary' : 'success'}">${s.type.toUpperCase()}</span></td>
+                        <td class="fw-bold">${s.name}</td>
+                        <td>${date}</td>
+                        <td class="text-center">${actionHtml}</td>
+                    `;
+                    listBody.appendChild(tr);
+                });
+
+                if(!isEditMode) {
+                    document.querySelectorAll('.toggle-visible').forEach(el =>
+                        el.addEventListener('change', e =>
+                            update(ref(db, `sessions/${e.target.dataset.key}`), { isVisible: e.target.checked })
+                        )
+                    );
+                    document.querySelectorAll('.btn-monitor').forEach(el =>
+                        el.addEventListener('click', e => enterMonitor(e.target.dataset.key))
+                    );
+                } else {
+                    document.querySelectorAll('.btn-delete').forEach(el =>
+                        el.addEventListener('click', e => deleteSession(e.currentTarget.dataset.key))
+                    );
+                    document.querySelectorAll('.btn-move-up').forEach(el =>
+                        el.addEventListener('click', e => moveSession(e.currentTarget.dataset.index, -1))
+                    );
+                    document.querySelectorAll('.btn-move-down').forEach(el =>
+                        el.addEventListener('click', e => moveSession(e.currentTarget.dataset.index, 1))
+                    );
+                }
+            }
+
+            // ── 과거 심사 이력 탭 (필터 적용) ───────────────────────────
+            let proceedCount   = 0;
+            let noproceedCount = 0;
+
+            if(filteredKeys.length === 0) {
+                historyBody.innerHTML = "<tr><td colspan='8' class='text-center p-3 text-muted'>조건에 맞는 데이터가 없습니다.</td></tr>";
+            } else {
+                filteredKeys.forEach((key, idx) => {
+                    const s     = sessionsData[key];
+                    const date  = new Date(s.createdAt).toLocaleDateString();
+                    const count = s.evaluations ? Object.keys(s.evaluations).length : 0;
+                    const avg   = calcSessionAvg(s);
+
+                    // 투자진행 집계
+                    if(s.investStatus === 'proceed')   proceedCount++;
+                    if(s.investStatus === 'noproceed') noproceedCount++;
+
+                    // 투자진행 표시 HTML
+                    let investHtml = '<span class="text-muted small">-</span>';
+                    if(s.investStatus === 'proceed')
+                        investHtml = '<span class="invest-proceed">● 진행</span>';
+                    else if(s.investStatus === 'noproceed')
+                        investHtml = '<span class="invest-noproceed">● 미진행</span>';
+
+                    const trH = document.createElement('tr');
+                    trH.innerHTML = `
+                        <td class="text-muted">${idx + 1}</td>
+                        <td><span class="badge bg-${s.type === 'startup' ? 'primary' : 'success'}">${s.type.toUpperCase()}</span></td>
+                        <td class="fw-bold text-start">${s.name}</td>
+                        <td>${date}</td>
+                        <td>${count}명</td>
+                        <td class="fw-bold text-primary">${avg !== null ? avg : '-'}</td>
+                        <td>${investHtml}</td>
+                        <td>${s.isVisible
+                            ? '<span class="text-primary fw-bold">진행중</span>'
+                            : '<span class="text-secondary">완료</span>'}</td>
+                    `;
+                    historyBody.appendChild(trH);
+                });
+            }
+
+            // ── 푸터 요약 행 ─────────────────────────────────────────────
+            const totalCount = filteredKeys.length;
+            historyFoot.innerHTML = `
+                <tr>
+                    <td></td>
+                    <td colspan="1" class="text-center">
+                        Total : ${totalCount}건
+                    </td>
+                    <td colspan="4"></td>
+                    <td class="text-center" style="font-size:0.82rem; line-height:1.5;">
+                        <span class="invest-proceed">진행 : ${proceedCount}건</span><br>
+                        <span class="invest-noproceed">미진행 : ${noproceedCount}건</span>
+                    </td>
+                    <td></td>
+                </tr>
+            `;
+        }
+
+        // ── 안건 생성/삭제/이동 ─────────────────────────────────────────
+        function createSession() {
+            const type = document.getElementById('new-type').value;
+            const name = document.getElementById('new-name').value;
+            if(!name) return alert("안건 이름을 입력하세요.");
+            if(!currentUser) return alert("로그인이 필요합니다.");
+
+            const btn = document.getElementById('btn-create-session');
+            const originalText = btn.innerText;
+            btn.innerText = "저장 중..."; btn.disabled = true;
+
+            let newOrder = 0;
+            try {
+                const keys = Object.keys(sessionsData || {});
+                let minOrder = 0;
+                if(keys.length > 0) {
+                    keys.forEach(k => {
+                        const o = (sessionsData[k]?.order !== undefined) ? sessionsData[k].order : 0;
+                        if(o < minOrder) minOrder = o;
+                    });
+                }
+                newOrder = minOrder - 1000;
+            } catch(err) {
+                newOrder = Date.now() * -1;
+            }
+
+            push(ref(db, 'sessions'), {
+                name, type, isVisible: false,
+                createdAt: Date.now(), order: newOrder
+            })
+            .then(() => {
+                alert("성공적으로 등록되었습니다.");
+                document.getElementById('new-name').value = "";
+            })
+            .catch(error => {
+                console.error(error);
+                if(error.code === "PERMISSION_DENIED" || error.message.includes("PERMISSION_DENIED"))
+                    alert("⚠️ 저장 실패: 권한이 없습니다.\nFirebase 규칙에서 .write를 true로 설정해주세요.");
+                else
+                    alert("저장 실패 오류: " + error.message);
+            })
+            .finally(() => { btn.innerText = originalText; btn.disabled = false; });
+        }
+
+        function deleteSession(key) {
+            if(confirm("정말 삭제하시겠습니까?\n이 작업은 되돌릴 수 없으며 모든 평가 데이터가 삭제됩니다.")) {
+                remove(ref(db, `sessions/${key}`))
+                    .then(() => alert("삭제되었습니다."))
+                    .catch(err => alert("삭제 실패: " + err.message));
+            }
+        }
+
+        function moveSession(indexStr, direction) {
+            const index      = parseInt(indexStr);
+            const sortedKeys = getSortedKeys();
+            if(direction === -1 && index === 0)                   return;
+            if(direction ===  1 && index === sortedKeys.length-1) return;
+
+            const currentKey   = sortedKeys[index];
+            const targetKey    = sortedKeys[index + direction];
+            const currentOrder = sessionsData[currentKey].order || 0;
+            const targetOrder  = sessionsData[targetKey].order  || 0;
+
+            let newCurrentOrder = targetOrder;
+            let newTargetOrder  = currentOrder;
+            if(currentOrder === targetOrder) {
+                newCurrentOrder = currentOrder + (direction * 1);
+                newTargetOrder  = currentOrder - (direction * 1);
+            }
+            const updates = {};
+            updates[`sessions/${currentKey}/order`] = newCurrentOrder;
+            updates[`sessions/${targetKey}/order`]  = newTargetOrder;
+            update(ref(db), updates);
+        }
+
+        function toggleEditMode() {
+            isEditMode = !isEditMode;
+            const btn      = document.getElementById('btn-toggle-edit-mode');
+            const thStatus = document.getElementById('th-status-title');
+            if(isEditMode) {
+                btn.classList.replace('btn-outline-secondary','btn-danger');
+                btn.innerHTML  = '<i class="fas fa-check"></i> 편집 완료';
+                thStatus.innerText = "순서 변경 / 삭제";
+            } else {
+                btn.classList.replace('btn-danger','btn-outline-secondary');
+                btn.innerHTML  = '<i class="fas fa-tools"></i> 목록 편집 (순서/삭제)';
+                thStatus.innerText = "관리 및 결과";
+            }
+            renderAdminList();
+        }
+
+        // ── 모니터링 ────────────────────────────────────────────────────
+        function enterMonitor(key) {
+            currentSessionId = key;
+            if(selectedUsersForChart.length === 0) selectedUsersForChart = ['average'];
+            document.getElementById('admin-monitoring').classList.remove('hidden');
+            document.getElementById('admin-dashboard').classList.add('hidden');
+            loadMonitorData(key);
+        }
+
+        function refreshMonitorView() { if(currentSessionId) loadMonitorData(currentSessionId); }
+
+        function loadMonitorData(key) {
+            const session = sessionsData[key];
+            if(!session) return;
+            document.getElementById('monitor-title').innerText = `📊 ${session.name} 분석 결과`;
+            // 투자진행 상태 표시
+            renderInvestStatusLabel(session.investStatus || null);
+            renderFeedback();
+            calculateAndRenderChart(session);
+        }
+
+        function renderFeedback() {
+            const session = sessionsData[currentSessionId];
+            const isAnon  = document.getElementById('anon-toggle').checked;
+            const evals   = session.evaluations || {};
+            const prosDiv = document.getElementById('fb-pros-list');
+            const consDiv = document.getElementById('fb-cons-list');
+            const synDiv  = document.getElementById('fb-syn-list');
+            prosDiv.innerHTML = ""; consDiv.innerHTML = ""; synDiv.innerHTML = "";
+
+            const userNames = Object.keys(evals).sort();
+            let hasData = false;
+            userNames.forEach((user, idx) => {
+                hasData = true;
+                const e = evals[user];
+                const displayName = isAnon ? `심사위원 ${idx+1}` : user;
+                const prefix = `<strong>${displayName}:</strong> `;
+                if(e.pros)    prosDiv.innerHTML += `<div class="feedback-box">${prefix}${e.pros}</div>`;
+                if(e.cons)    consDiv.innerHTML += `<div class="feedback-box cons">${prefix}${e.cons}</div>`;
+                if(e.synergy) synDiv.innerHTML  += `<div class="feedback-box syn">${prefix}${e.synergy}</div>`;
+            });
+            if(!hasData) prosDiv.innerHTML = "<small class='text-muted'>아직 의견이 없습니다.</small>";
+        }
+
+        function calculateAndRenderChart(session) {
+            const evals     = session.evaluations || {};
+            const labels    = criteria[session.type];
+            const userNames = Object.keys(evals).sort();
+            const isAnon    = document.getElementById('anon-toggle').checked;
+
+            let count = 0, sums = new Array(6).fill(0),
+                maxScores = new Array(6).fill(0), minScores = new Array(6).fill(5);
+            const userScores = {};
+
+            userNames.forEach(user => {
+                count++;
+                const scores = evals[user].scores;
+                userScores[user] = scores;
+                scores.forEach((s, i) => {
+                    sums[i] += s;
+                    if(s > maxScores[i]) maxScores[i] = s;
+                    if(s < minScores[i]) minScores[i] = s;
+                });
+            });
+            if(count === 0) minScores.fill(0);
+
+            const averages  = sums.map(s => count > 0 ? (s / count).toFixed(1) : 0);
+            const totalAvg  = count > 0
+                ? (averages.reduce((a,b) => parseFloat(a)+parseFloat(b), 0) / 6).toFixed(1)
+                : "0.0";
+
+            document.getElementById('total-score-display').innerText = totalAvg;
+            const scoreList = document.getElementById('score-breakdown-list');
+            scoreList.innerHTML = "";
+            labels.forEach((label, idx) => {
+                scoreList.innerHTML += `
+                    <div class="score-list-item">
+                        <span>${label}</span>
+                        <div class="text-end">
+                            <span class="fw-bold fs-6">${averages[idx]}</span>
+                            <span class="score-detail">(최고 ${maxScores[idx]} / 최저 ${minScores[idx]})</span>
+                        </div>
+                    </div>`;
+            });
+
+            // 차트 유저 토글
+            const controlsDiv = document.getElementById('chart-users-toggle');
+            let controlsHTML = `<span class="fw-bold me-3">표시:</span>
+                <label><input type="checkbox" class="chart-checkbox" value="average" ${selectedUsersForChart.includes('average')?'checked':''}> <span class="badge bg-primary">평균</span></label>`;
+            userNames.forEach((user, idx) => {
+                const displayName = isAnon ? `심사위원 ${idx+1}` : user;
+                const isChecked   = selectedUsersForChart.includes(user) ? 'checked' : '';
+                controlsHTML += `<label><input type="checkbox" class="chart-checkbox" value="${user}" ${isChecked}> ${displayName}</label>`;
+            });
+            controlsDiv.innerHTML = controlsHTML;
+
+            document.querySelectorAll('.chart-checkbox').forEach(el => {
+                el.addEventListener('change', e => {
+                    const val = e.target.value;
+                    if(e.target.checked) selectedUsersForChart.push(val);
+                    else selectedUsersForChart = selectedUsersForChart.filter(item => item !== val);
+                    if(currentSessionId) calculateAndRenderChart(sessionsData[currentSessionId]);
+                });
+            });
+
+            const datasets = [];
+            if(selectedUsersForChart.includes('average'))
+                datasets.push({ label: '평균', data: averages, backgroundColor: 'rgba(13,110,253,0.2)', borderColor: '#0d6efd', borderWidth: 3, pointBackgroundColor: '#0d6efd' });
+
+            userNames.forEach((user, idx) => {
+                if(selectedUsersForChart.includes(user)) {
+                    const displayName = isAnon ? `심사위원 ${idx+1}` : user;
+                    const color = `hsl(${(idx * 137) % 360}, 70%, 50%)`;
+                    datasets.push({ label: displayName, data: userScores[user], borderColor: color, borderWidth: 2, fill: false, pointBackgroundColor: color });
+                }
+            });
+
+            if(myRadarChart) myRadarChart.destroy();
+            const ctx = document.getElementById('adminChart').getContext('2d');
+            myRadarChart = new Chart(ctx, {
+                type: 'radar',
+                data: { labels, datasets },
+                options: {
+                    scales: { r: { min: 0, max: 5, ticks: { stepSize: 1 } } },
+                    plugins: { legend: { position: 'bottom' } }
+                }
+            });
+        }
+
+        // ── IC 목록 / 평가 ───────────────────────────────────────────────
+        function renderIcList() {
+            const listDiv    = document.getElementById('ic-session-list');
+            listDiv.innerHTML = "";
+            const sortedKeys = getSortedKeys();
+            let hasItem = false;
+
+            sortedKeys.forEach(key => {
+                const s = sessionsData[key];
+                if(s.isVisible) {
+                    hasItem = true;
+                    const isDone = s.evaluations && s.evaluations[currentUserName];
+                    const btn    = document.createElement('button');
+                    btn.className = "list-group-item list-group-item-action d-flex justify-content-between align-items-center mb-2 border shadow-sm btn-ic-eval";
+                    btn.setAttribute('data-key', key);
+                    btn.innerHTML = `
+                        <div class="d-flex align-items-center">
+                            <span class="badge bg-${s.type==='startup'?'primary':'success'} me-3 p-2">${s.type.toUpperCase()}</span>
+                            <span class="fw-bold fs-5">${s.name}</span>
+                        </div>
+                        ${isDone
+                            ? '<span class="text-success fw-bold"><i class="fas fa-check-circle"></i> 평가 완료</span>'
+                            : '<span class="badge bg-secondary">평가 하기</span>'}
+                    `;
+                    listDiv.appendChild(btn);
+                }
+            });
+            if(!hasItem)
+                listDiv.innerHTML = "<div class='text-center p-5 text-muted'>진행 중인 심사가 없습니다.</div>";
+
+            document.querySelectorAll('.btn-ic-eval').forEach(el =>
+                el.addEventListener('click', e => openEvaluation(e.currentTarget.dataset.key))
+            );
+        }
+
+        function openEvaluation(key) {
+            currentSessionId = key;
+            const session    = sessionsData[key];
+            document.getElementById('ic-dashboard').classList.add('hidden');
+            document.getElementById('ic-evaluation').classList.remove('hidden');
+            document.getElementById('eval-title').innerText = session.name;
+            const container = document.getElementById('criteria-inputs');
+            container.innerHTML = "";
+            criteria[session.type].forEach((item, idx) => {
+                container.innerHTML += `
+                    <div class="mb-4">
+                        <label class="d-flex justify-content-between">
+                            <span class="fw-bold">${item}</span>
+                            <span id="score-val-${idx}" class="badge bg-primary fs-6">3.0</span>
+                        </label>
+                        <input type="range" class="form-range" min="0" max="5" step="0.5" id="criteria-${idx}" value="3"
+                            oninput="document.getElementById('score-val-${idx}').innerText=this.value">
+                        <div class="d-flex justify-content-between small text-muted">
+                            <span>0</span><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span>
+                        </div>
+                    </div>`;
+            });
+            document.getElementById('comment-pros').value    = "";
+            document.getElementById('comment-cons').value    = "";
+            document.getElementById('comment-synergy').value = "";
+        }
+
+        function submitEvaluation() {
+            const session = sessionsData[currentSessionId];
+            const scores  = [];
+            criteria[session.type].forEach((_, idx) =>
+                scores.push(parseFloat(document.getElementById(`criteria-${idx}`).value))
+            );
+            const feedback = {
+                user:      currentUserName,
+                scores,
+                pros:      document.getElementById('comment-pros').value,
+                cons:      document.getElementById('comment-cons').value,
+                synergy:   document.getElementById('comment-synergy').value,
+                timestamp: Date.now()
+            };
+            set(ref(db, `sessions/${currentSessionId}/evaluations/${currentUserName}`), feedback)
+                .then(() => { alert("제출되었습니다."); goHome(); });
+        }
+
+    } catch(e) {
+        document.getElementById('loading-overlay').classList.remove('hidden');
+        document.getElementById('global-error-msg').innerText = "스크립트 초기화 오류: " + e.message;
+    }
+</script>
+</body>
+</html>
