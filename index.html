@@ -34,13 +34,11 @@
             border-bottom: 1px solid #e9ecef; 
         }
 
-        /* 관리 탭 컬럼 너비 */
         .col-type  { width: 12%; }
         .col-name  { width: 38%; }
         .col-date  { width: 14%; }
         .col-status { width: 36%; }
 
-        /* 이력 탭 푸터 행 */
         .table tfoot td {
             background-color: #f1f3f5;
             font-weight: 700;
@@ -49,7 +47,6 @@
             padding: 12px 10px;
         }
 
-        /* 필터 패널 */
         .filter-panel {
             background: #f8f9fa;
             border: 1px solid #dee2e6;
@@ -107,11 +104,9 @@
             align-self: flex-end;
         }
 
-        /* 투자진행 배지 */
-        .invest-proceed  { color: #0d6efd; font-weight: 700; }
+        .invest-proceed   { color: #0d6efd; font-weight: 700; }
         .invest-noproceed { color: #dc3545; font-weight: 700; }
 
-        /* 모니터링 투자진행 버튼 영역 */
         .invest-status-bar {
             display: flex;
             align-items: center;
@@ -124,7 +119,7 @@
 
         .feedback-box { background: #fff; border: 1px solid #e9ecef; border-radius: 8px; padding: 12px; margin-bottom: 8px; border-left: 4px solid #0d6efd; box-shadow: 0 1px 2px rgba(0,0,0,0.02); }
         .feedback-box.cons { border-left-color: #dc3545; }
-        .feedback-box.syn { border-left-color: #198754; }
+        .feedback-box.syn  { border-left-color: #198754; }
         .score-list-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #f1f3f5; }
         .score-list-item:last-child { border-bottom: none; }
         .score-detail { font-size: 0.8rem; color: #6c757d; margin-left: 5px; }
@@ -157,7 +152,6 @@
 
 <div class="container">
 
-    <!-- 로그인 -->
     <div id="login-section" class="hidden">
         <div class="row justify-content-center align-items-center" style="height: 80vh;">
             <div class="col-md-5">
@@ -181,7 +175,6 @@
         </div>
     </div>
 
-    <!-- 이름 설정 모달 -->
     <div class="modal fade" id="nameSettingModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
@@ -199,7 +192,6 @@
         </div>
     </div>
 
-    <!-- 관리자 대시보드 -->
     <div id="admin-dashboard" class="hidden">
         <h4 class="mb-3">관리자 대시보드</h4>
         
@@ -223,7 +215,6 @@
         </ul>
         
         <div class="tab-content">
-            <!-- 평가 관리 탭 -->
             <div class="tab-pane fade show active" id="tab-manage">
                 <div class="card p-3">
                     <div class="d-flex justify-content-end mb-2">
@@ -246,7 +237,6 @@
                 </div>
             </div>
 
-            <!-- 과거 심사 이력 탭 -->
             <div class="tab-pane fade" id="tab-history">
                 <div class="card p-3">
                     <div class="d-flex justify-content-between align-items-center mb-3">
@@ -261,11 +251,8 @@
                         </div>
                     </div>
 
-                    <!-- 필터 패널 -->
                     <div id="filter-panel" class="filter-panel hidden">
                         <div class="filter-row">
-
-                            <!-- Type 필터 -->
                             <div class="filter-group">
                                 <label>Type</label>
                                 <div class="filter-check-group">
@@ -279,8 +266,6 @@
                                     </div>
                                 </div>
                             </div>
-
-                            <!-- Date 필터 -->
                             <div class="filter-group">
                                 <label>Date (등록일 범위)</label>
                                 <div class="filter-range-wrap">
@@ -289,8 +274,6 @@
                                     <input type="date" id="flt-date-to">
                                 </div>
                             </div>
-
-                            <!-- 참여 필터 -->
                             <div class="filter-group">
                                 <label>참여 인원 (명)</label>
                                 <div class="filter-range-wrap">
@@ -299,8 +282,6 @@
                                     <input type="number" id="flt-part-max" placeholder="최대" min="0">
                                 </div>
                             </div>
-
-                            <!-- 종합점수 필터 -->
                             <div class="filter-group">
                                 <label>종합점수 (0 ~ 5)</label>
                                 <div class="filter-range-wrap">
@@ -309,8 +290,6 @@
                                     <input type="number" id="flt-score-max" placeholder="최대" min="0" max="5" step="0.1">
                                 </div>
                             </div>
-
-                            <!-- 상태 필터 -->
                             <div class="filter-group">
                                 <label>상태</label>
                                 <div class="filter-check-group">
@@ -324,8 +303,6 @@
                                     </div>
                                 </div>
                             </div>
-
-                            <!-- 초기화 버튼 -->
                             <button id="btn-filter-reset" class="btn btn-sm btn-outline-secondary btn-filter-reset">
                                 <i class="fas fa-undo"></i> 초기화
                             </button>
@@ -355,7 +332,6 @@
         </div>
     </div>
 
-    <!-- 관리자 모니터링 -->
     <div id="admin-monitoring" class="hidden">
         <button id="btn-monitor-back" class="btn btn-secondary mb-3"><i class="fas fa-arrow-left"></i> 목록으로</button>
         <div class="card p-4">
@@ -367,12 +343,11 @@
                 </div>
             </div>
 
-            <!-- 투자진행 여부 설정 바 -->
             <div class="invest-status-bar">
                 <span class="fw-bold me-2">📌 투자진행 여부:</span>
-                <button id="btn-invest-proceed" class="btn btn-sm btn-outline-primary">✅ 진행</button>
+                <button id="btn-invest-proceed"   class="btn btn-sm btn-outline-primary">✅ 진행</button>
                 <button id="btn-invest-noproceed" class="btn btn-sm btn-outline-danger">❌ 미진행</button>
-                <button id="btn-invest-clear" class="btn btn-sm btn-outline-secondary">— 미설정</button>
+                <button id="btn-invest-clear"     class="btn btn-sm btn-outline-secondary">— 미설정</button>
                 <span id="invest-status-label" class="ms-3 fw-bold fs-6"></span>
             </div>
 
@@ -403,13 +378,11 @@
         </div>
     </div>
 
-    <!-- IC 대시보드 -->
     <div id="ic-dashboard" class="hidden">
         <h4 class="mb-3">심사 대상 목록</h4>
         <div class="card p-3"><div class="list-group" id="ic-session-list"></div></div>
     </div>
 
-    <!-- IC 평가 화면 -->
     <div id="ic-evaluation" class="hidden">
         <button id="btn-eval-back" class="btn btn-secondary mb-3"><i class="fas fa-arrow-left"></i> 목록으로</button>
         <div class="card p-4">
@@ -448,28 +421,24 @@
 
     try {
         const app = initializeApp(firebaseConfig);
-        const db = getDatabase(app);
+        const db  = getDatabase(app);
         const auth = getAuth(app);
 
-        let currentUser      = null;
-        let currentUserName  = "";
-        let currentRole      = "";
-        let currentSessionId = "";
-        let sessionsData     = {};
-        let myRadarChart     = null;
+        let currentUser           = null;
+        let currentUserName       = "";
+        let currentRole           = "";
+        let currentSessionId      = "";
+        let sessionsData          = {};
+        let myRadarChart          = null;
         let selectedUsersForChart = [];
-        let nameModal        = null;
-        let isEditMode       = false;
+        let nameModal             = null;
+        let isEditMode            = false;
 
-        // ── 현재 필터 상태 ──────────────────────────────────────────────
         let filterState = {
             types:    ['startup', 'fund'],
-            dateFrom: '',
-            dateTo:   '',
-            partMin:  '',
-            partMax:  '',
-            scoreMin: '',
-            scoreMax: '',
+            dateFrom: '', dateTo: '',
+            partMin:  '', partMax: '',
+            scoreMin: '', scoreMax: '',
             statuses: ['ongoing', 'done']
         };
 
@@ -478,7 +447,6 @@
             fund:    ["GP 역량", "운용 전략", "수익/회수", "네트워크", "정보/인사이트", "전략적 정합성"]
         };
 
-        // ── 초기화 ──────────────────────────────────────────────────────
         function initApp() {
             bindClick('btn-login-action',     performLogin);
             bindClick('btn-logout',           performLogout);
@@ -492,13 +460,11 @@
             bindClick('btn-excel-download',   downloadExcel);
             bindClick('btn-toggle-edit-mode', toggleEditMode);
 
-            // 필터 토글 / 초기화
-            bindClick('btn-toggle-filter', () => {
-                document.getElementById('filter-panel').classList.toggle('hidden');
-            });
+            bindClick('btn-toggle-filter', () =>
+                document.getElementById('filter-panel').classList.toggle('hidden')
+            );
             bindClick('btn-filter-reset', resetFilter);
 
-            // 필터 입력 이벤트
             document.querySelectorAll('.filter-type, .filter-status').forEach(el =>
                 el.addEventListener('change', onFilterChange)
             );
@@ -508,7 +474,6 @@
                 if(el) el.addEventListener('input', onFilterChange);
             });
 
-            // 투자진행 버튼
             bindClick('btn-invest-proceed',   () => setInvestStatus('proceed'));
             bindClick('btn-invest-noproceed', () => setInvestStatus('noproceed'));
             bindClick('btn-invest-clear',     () => setInvestStatus(null));
@@ -527,10 +492,10 @@
                 if (user) {
                     currentUser = user;
                     if(user.email.startsWith("admin@")) {
-                        currentRole = 'admin';
+                        currentRole     = 'admin';
                         currentUserName = "관리자";
                     } else {
-                        currentRole = 'ic';
+                        currentRole     = 'ic';
                         currentUserName = user.displayName;
                     }
                     updateUserDisplay();
@@ -552,7 +517,6 @@
 
         initApp();
 
-        // ── 유틸 ────────────────────────────────────────────────────────
         function bindClick(id, func) {
             const el = document.getElementById(id);
             if(el) el.addEventListener('click', func);
@@ -567,7 +531,6 @@
             return itemCount > 0 ? parseFloat((grandSum / itemCount).toFixed(1)) : null;
         }
 
-        // ── 필터 ────────────────────────────────────────────────────────
         function onFilterChange() {
             filterState.types    = [...document.querySelectorAll('.filter-type:checked')].map(e => e.value);
             filterState.statuses = [...document.querySelectorAll('.filter-status:checked')].map(e => e.value);
@@ -581,7 +544,6 @@
         }
 
         function resetFilter() {
-            // 체크박스 전체 복원
             document.querySelectorAll('.filter-type, .filter-status').forEach(el => el.checked = true);
             ['flt-date-from','flt-date-to','flt-part-min','flt-part-max',
              'flt-score-min','flt-score-max'].forEach(id => {
@@ -600,41 +562,28 @@
             return keys.filter(key => {
                 const s = sessionsData[key];
                 if(!s) return false;
-
-                // Type
                 if(!filterState.types.includes(s.type)) return false;
-
-                // Date
                 if(filterState.dateFrom) {
                     const from = new Date(filterState.dateFrom).getTime();
                     if(s.createdAt < from) return false;
                 }
                 if(filterState.dateTo) {
-                    // 해당 날 끝(23:59:59)까지 포함
                     const to = new Date(filterState.dateTo).getTime() + 86399999;
                     if(s.createdAt > to) return false;
                 }
-
-                // 참여 인원
                 const count = s.evaluations ? Object.keys(s.evaluations).length : 0;
                 if(filterState.partMin !== '' && count < parseInt(filterState.partMin)) return false;
                 if(filterState.partMax !== '' && count > parseInt(filterState.partMax)) return false;
-
-                // 종합점수
-                const avg = calcSessionAvg(s);
+                const avg    = calcSessionAvg(s);
                 const avgVal = avg !== null ? avg : 0;
                 if(filterState.scoreMin !== '' && avgVal < parseFloat(filterState.scoreMin)) return false;
                 if(filterState.scoreMax !== '' && avgVal > parseFloat(filterState.scoreMax)) return false;
-
-                // 상태
                 const statusVal = s.isVisible ? 'ongoing' : 'done';
                 if(!filterState.statuses.includes(statusVal)) return false;
-
                 return true;
             });
         }
 
-        // ── 투자진행 설정 ───────────────────────────────────────────────
         function setInvestStatus(status) {
             if(!currentSessionId) return;
             update(ref(db, `sessions/${currentSessionId}`), { investStatus: status })
@@ -644,35 +593,32 @@
 
         function renderInvestStatusLabel(status) {
             const label = document.getElementById('invest-status-label');
-            if(status === 'proceed') {
+            if(status === 'proceed')
                 label.innerHTML = '<span class="invest-proceed">● 진행</span>';
-            } else if(status === 'noproceed') {
+            else if(status === 'noproceed')
                 label.innerHTML = '<span class="invest-noproceed">● 미진행</span>';
-            } else {
+            else
                 label.innerHTML = '<span class="text-muted">미설정</span>';
-            }
         }
 
-        // ── 엑셀 다운로드 ───────────────────────────────────────────────
         function downloadExcel() {
             if(!sessionsData || Object.keys(sessionsData).length === 0)
                 return alert("다운로드할 데이터가 없습니다.");
-            const exportData = [];
-            const sortedKeys = getSortedKeys();
-            const filteredKeys = applyFilter(sortedKeys);
+            const exportData   = [];
+            const filteredKeys = applyFilter(getSortedKeys());
 
             filteredKeys.forEach((key, idx) => {
-                const s = sessionsData[key];
+                const s     = sessionsData[key];
                 const date  = new Date(s.createdAt).toLocaleDateString();
                 const count = s.evaluations ? Object.keys(s.evaluations).length : 0;
                 const avg   = calcSessionAvg(s);
-                const investLabel = s.investStatus === 'proceed' ? '진행'
+                const investLabel = s.investStatus === 'proceed'   ? '진행'
                                   : s.investStatus === 'noproceed' ? '미진행' : '-';
                 exportData.push({
                     "#": idx + 1,
-                    "구분":     s.type.toUpperCase(),
-                    "안건명":   s.name,
-                    "등록일":   date,
+                    "구분":      s.type.toUpperCase(),
+                    "안건명":    s.name,
+                    "등록일":    date,
                     "참여 인원": count + "명",
                     "종합 점수": avg !== null ? avg : "0.0",
                     "투자진행":  investLabel,
@@ -687,7 +633,6 @@
             XLSX.writeFile(workbook, `투자심사이력_${today}.xlsx`);
         }
 
-        // ── 로그인/아웃 ─────────────────────────────────────────────────
         async function performLogin() {
             let email = document.getElementById('login-email').value.trim();
             const pw  = document.getElementById('login-pw').value;
@@ -701,7 +646,7 @@
             } catch (error) {
                 document.getElementById('loading-overlay').classList.add('hidden');
                 let msg = "로그인 실패: ";
-                if(error.code === 'auth/user-not-found')   msg += "계정 없음";
+                if(error.code === 'auth/user-not-found')      msg += "계정 없음";
                 else if(error.code === 'auth/wrong-password') msg += "비밀번호 오류";
                 else msg += error.message;
                 errorMsg.innerText = msg;
@@ -751,8 +696,7 @@
         }
 
         function syncData() {
-            const sessionsRef = ref(db, 'sessions');
-            onValue(sessionsRef, (snapshot) => {
+            onValue(ref(db, 'sessions'), (snapshot) => {
                 sessionsData = snapshot.val() || {};
                 if(currentRole === 'admin') {
                     renderAdminList();
@@ -773,7 +717,6 @@
             });
         }
 
-        // ── 관리자 목록 렌더 ────────────────────────────────────────────
         function renderAdminList() {
             const listBody    = document.getElementById('admin-session-list');
             const historyBody = document.getElementById('admin-history-list');
@@ -783,7 +726,7 @@
             const sortedKeys   = getSortedKeys();
             const filteredKeys = applyFilter(sortedKeys);
 
-            // ── 평가 관리 탭 (필터 미적용 — 전체 표시) ─────────────────
+            // 평가 관리 탭
             if(sortedKeys.length === 0) {
                 listBody.innerHTML = "<tr><td colspan='5' class='text-center p-3'>데이터 없음</td></tr>";
             } else {
@@ -791,7 +734,6 @@
                     const s    = sessionsData[key];
                     const date = new Date(s.createdAt).toLocaleDateString();
                     const tr   = document.createElement('tr');
-
                     let actionHtml = '';
                     if(isEditMode) {
                         actionHtml = `
@@ -811,7 +753,6 @@
                             </div>
                         `;
                     }
-
                     tr.innerHTML = `
                         <td class="text-muted">${index + 1}</td>
                         <td><span class="badge bg-${s.type === 'startup' ? 'primary' : 'success'}">${s.type.toUpperCase()}</span></td>
@@ -844,9 +785,8 @@
                 }
             }
 
-            // ── 과거 심사 이력 탭 (필터 적용) ───────────────────────────
-            let proceedCount   = 0;
-            let noproceedCount = 0;
+            // 과거 심사 이력 탭
+            let proceedCount = 0, noproceedCount = 0;
 
             if(filteredKeys.length === 0) {
                 historyBody.innerHTML = "<tr><td colspan='8' class='text-center p-3 text-muted'>조건에 맞는 데이터가 없습니다.</td></tr>";
@@ -857,11 +797,9 @@
                     const count = s.evaluations ? Object.keys(s.evaluations).length : 0;
                     const avg   = calcSessionAvg(s);
 
-                    // 투자진행 집계
                     if(s.investStatus === 'proceed')   proceedCount++;
                     if(s.investStatus === 'noproceed') noproceedCount++;
 
-                    // 투자진행 표시 HTML
                     let investHtml = '<span class="text-muted small">-</span>';
                     if(s.investStatus === 'proceed')
                         investHtml = '<span class="invest-proceed">● 진행</span>';
@@ -885,14 +823,10 @@
                 });
             }
 
-            // ── 푸터 요약 행 ─────────────────────────────────────────────
-            const totalCount = filteredKeys.length;
             historyFoot.innerHTML = `
                 <tr>
                     <td></td>
-                    <td colspan="1" class="text-center">
-                        Total : ${totalCount}건
-                    </td>
+                    <td colspan="1" class="text-center">Total : ${filteredKeys.length}건</td>
                     <td colspan="4"></td>
                     <td class="text-center" style="font-size:0.82rem; line-height:1.5;">
                         <span class="invest-proceed">진행 : ${proceedCount}건</span><br>
@@ -903,7 +837,6 @@
             `;
         }
 
-        // ── 안건 생성/삭제/이동 ─────────────────────────────────────────
         function createSession() {
             const type = document.getElementById('new-type').value;
             const name = document.getElementById('new-name').value;
@@ -918,25 +851,18 @@
             try {
                 const keys = Object.keys(sessionsData || {});
                 let minOrder = 0;
-                if(keys.length > 0) {
+                if(keys.length > 0)
                     keys.forEach(k => {
                         const o = (sessionsData[k]?.order !== undefined) ? sessionsData[k].order : 0;
                         if(o < minOrder) minOrder = o;
                     });
-                }
                 newOrder = minOrder - 1000;
             } catch(err) {
                 newOrder = Date.now() * -1;
             }
 
-            push(ref(db, 'sessions'), {
-                name, type, isVisible: false,
-                createdAt: Date.now(), order: newOrder
-            })
-            .then(() => {
-                alert("성공적으로 등록되었습니다.");
-                document.getElementById('new-name').value = "";
-            })
+            push(ref(db, 'sessions'), { name, type, isVisible: false, createdAt: Date.now(), order: newOrder })
+            .then(() => { alert("성공적으로 등록되었습니다."); document.getElementById('new-name').value = ""; })
             .catch(error => {
                 console.error(error);
                 if(error.code === "PERMISSION_DENIED" || error.message.includes("PERMISSION_DENIED"))
@@ -969,8 +895,8 @@
             let newCurrentOrder = targetOrder;
             let newTargetOrder  = currentOrder;
             if(currentOrder === targetOrder) {
-                newCurrentOrder = currentOrder + (direction * 1);
-                newTargetOrder  = currentOrder - (direction * 1);
+                newCurrentOrder = currentOrder + direction;
+                newTargetOrder  = currentOrder - direction;
             }
             const updates = {};
             updates[`sessions/${currentKey}/order`] = newCurrentOrder;
@@ -984,17 +910,16 @@
             const thStatus = document.getElementById('th-status-title');
             if(isEditMode) {
                 btn.classList.replace('btn-outline-secondary','btn-danger');
-                btn.innerHTML  = '<i class="fas fa-check"></i> 편집 완료';
+                btn.innerHTML      = '<i class="fas fa-check"></i> 편집 완료';
                 thStatus.innerText = "순서 변경 / 삭제";
             } else {
                 btn.classList.replace('btn-danger','btn-outline-secondary');
-                btn.innerHTML  = '<i class="fas fa-tools"></i> 목록 편집 (순서/삭제)';
+                btn.innerHTML      = '<i class="fas fa-tools"></i> 목록 편집 (순서/삭제)';
                 thStatus.innerText = "관리 및 결과";
             }
             renderAdminList();
         }
 
-        // ── 모니터링 ────────────────────────────────────────────────────
         function enterMonitor(key) {
             currentSessionId = key;
             if(selectedUsersForChart.length === 0) selectedUsersForChart = ['average'];
@@ -1009,7 +934,6 @@
             const session = sessionsData[key];
             if(!session) return;
             document.getElementById('monitor-title').innerText = `📊 ${session.name} 분석 결과`;
-            // 투자진행 상태 표시
             renderInvestStatusLabel(session.investStatus || null);
             renderFeedback();
             calculateAndRenderChart(session);
@@ -1029,7 +953,8 @@
             userNames.forEach((user, idx) => {
                 hasData = true;
                 const e = evals[user];
-                const displayName = isAnon ? `심사위원 ${idx+1}` : user;
+                // ★ 변경: '심사위원' → '익명'
+                const displayName = isAnon ? `익명${idx + 1}` : user;
                 const prefix = `<strong>${displayName}:</strong> `;
                 if(e.pros)    prosDiv.innerHTML += `<div class="feedback-box">${prefix}${e.pros}</div>`;
                 if(e.cons)    consDiv.innerHTML += `<div class="feedback-box cons">${prefix}${e.cons}</div>`;
@@ -1060,8 +985,8 @@
             });
             if(count === 0) minScores.fill(0);
 
-            const averages  = sums.map(s => count > 0 ? (s / count).toFixed(1) : 0);
-            const totalAvg  = count > 0
+            const averages = sums.map(s => count > 0 ? (s / count).toFixed(1) : 0);
+            const totalAvg = count > 0
                 ? (averages.reduce((a,b) => parseFloat(a)+parseFloat(b), 0) / 6).toFixed(1)
                 : "0.0";
 
@@ -1079,12 +1004,12 @@
                     </div>`;
             });
 
-            // 차트 유저 토글
             const controlsDiv = document.getElementById('chart-users-toggle');
             let controlsHTML = `<span class="fw-bold me-3">표시:</span>
                 <label><input type="checkbox" class="chart-checkbox" value="average" ${selectedUsersForChart.includes('average')?'checked':''}> <span class="badge bg-primary">평균</span></label>`;
             userNames.forEach((user, idx) => {
-                const displayName = isAnon ? `심사위원 ${idx+1}` : user;
+                // ★ 변경: '심사위원' → '익명'
+                const displayName = isAnon ? `익명${idx + 1}` : user;
                 const isChecked   = selectedUsersForChart.includes(user) ? 'checked' : '';
                 controlsHTML += `<label><input type="checkbox" class="chart-checkbox" value="${user}" ${isChecked}> ${displayName}</label>`;
             });
@@ -1105,7 +1030,8 @@
 
             userNames.forEach((user, idx) => {
                 if(selectedUsersForChart.includes(user)) {
-                    const displayName = isAnon ? `심사위원 ${idx+1}` : user;
+                    // ★ 변경: '심사위원' → '익명'
+                    const displayName = isAnon ? `익명${idx + 1}` : user;
                     const color = `hsl(${(idx * 137) % 360}, 70%, 50%)`;
                     datasets.push({ label: displayName, data: userScores[user], borderColor: color, borderWidth: 2, fill: false, pointBackgroundColor: color });
                 }
@@ -1123,7 +1049,6 @@
             });
         }
 
-        // ── IC 목록 / 평가 ───────────────────────────────────────────────
         function renderIcList() {
             const listDiv    = document.getElementById('ic-session-list');
             listDiv.innerHTML = "";
