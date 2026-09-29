@@ -2,8 +2,9 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BS Investment Committee Platform V8.5</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="format-detection" content="telephone=no">
+    <title>BS Investment Committee Platform V8.6</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" defer></script>
@@ -127,6 +128,63 @@
         .chart-controls label { font-size: 0.85rem; margin-right: 15px; cursor: pointer; }
         #loading-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,1); z-index: 9999; display: flex; justify-content: center; align-items: center; flex-direction: column; transition: opacity 0.5s ease; }
         #global-error-msg { color: red; margin-top: 20px; font-weight: bold; text-align: center; padding: 20px; }
+
+        /* ===== [M] 모바일 최적화 (V8.6) ===== */
+        .feedback-box { white-space: pre-wrap; word-break: break-word; }   /* 줄바꿈 보존 */
+        textarea.form-control { min-height: 96px; resize: vertical; }
+        #conn-status { font-size: 0.75rem; }
+        .toast-msg { position: fixed; left: 50%; bottom: calc(20px + env(safe-area-inset-bottom)); transform: translateX(-50%);
+                     z-index: 10000; max-width: 92vw; background: #212529; color: #fff; padding: 10px 16px; border-radius: 8px;
+                     font-size: 0.9rem; box-shadow: 0 4px 12px rgba(0,0,0,.2); }
+        #inapp-banner { font-size: 0.85rem; }
+        button, .btn, .form-check-input { touch-action: manipulation; }
+
+        @media (max-width: 767.98px) {
+            /* iOS: 16px 미만 입력창은 포커스 시 강제 확대 → 16px 고정 */
+            input, select, textarea, .form-control, .form-select,
+            .filter-group input[type="date"], .filter-group input[type="number"] { font-size: 16px !important; }
+
+            .container { margin-top: 12px; margin-bottom: 24px; padding-left: 12px; padding-right: 12px; }
+            .card { border-radius: 10px; }
+            .card.p-4, .card.p-5 { padding: 1rem !important; }
+            h4 { font-size: 1.15rem; }
+
+            /* 네비게이션 */
+            .navbar-brand { font-size: 1rem; margin-left: .25rem !important; }
+            .navbar .container-fluid { flex-wrap: wrap; gap: 6px; }
+            #user-display-name { font-size: .85rem; margin-right: .5rem !important; }
+            .navbar .btn { padding: .35rem .55rem; }
+            .nav-btn-text { display: none; }
+
+            /* 로그인 */
+            #login-section .row { height: auto !important; min-height: 70vh; }
+
+            /* 표: 가로 스크롤 + 여백 축소 */
+            .table-responsive { -webkit-overflow-scrolling: touch; }
+            .table th { padding: 10px 6px; font-size: .8rem; }
+            .table td { padding: 8px 6px; font-size: .85rem; }
+            .table td.fw-bold { white-space: normal; min-width: 120px; text-align: left; }
+
+            /* 필터 */
+            .filter-panel { padding: 12px; }
+            .filter-panel .filter-row { flex-direction: column; align-items: stretch; }
+            .filter-range-wrap input { flex: 1; width: auto !important; min-width: 0; }
+            .btn-filter-reset { align-self: stretch; }
+
+            /* 모니터링 */
+            .invest-status-bar { flex-wrap: wrap; }
+            .radar-chart-container { height: 300px; }
+            #monitor-title { font-size: 1.05rem; }
+            .chart-controls label { display: inline-block; margin: 4px 12px 4px 0; }
+
+            /* 심사위원 목록/평가 */
+            .btn-ic-eval .fs-5 { font-size: 1rem !important; }
+            .btn-ic-eval { padding: 12px; gap: 8px; text-align: left; }
+            .btn-ic-eval > div { min-width: 0; }
+            .btn-ic-eval .fw-bold { word-break: keep-all; }
+            .form-range { height: 2rem; }
+            #ic-evaluation .card { margin-bottom: calc(24px + env(safe-area-inset-bottom)); }
+        }
     </style>
 </head>
 <body>
@@ -140,15 +198,21 @@
 
 <nav id="navbar" class="navbar navbar-expand-lg navbar-light bg-white shadow-sm hidden">
     <div class="container-fluid">
-        <span class="navbar-brand fw-bold ms-3">🏛️ BS Investment Committee</span>
+        <span class="navbar-brand fw-bold ms-3">🏛️ BS <span class="nav-btn-text">Investment </span>IC</span>
         <div class="d-flex align-items-center me-3">
+            <span id="conn-status" class="badge bg-secondary me-2">연결 확인 중</span>
             <span id="user-display-name" class="me-3 fw-bold text-primary"></span>
             <button id="btn-settings" class="btn btn-outline-secondary btn-sm me-2" title="이름 변경"><i class="fas fa-cog"></i></button>
-            <button id="btn-home" class="btn btn-outline-secondary btn-sm me-2"><i class="fas fa-home"></i> 홈</button>
-            <button id="btn-logout" class="btn btn-outline-danger btn-sm">로그아웃</button>
+            <button id="btn-home" class="btn btn-outline-secondary btn-sm me-2"><i class="fas fa-home"></i><span class="nav-btn-text"> 홈</span></button>
+            <button id="btn-logout" class="btn btn-outline-danger btn-sm" title="로그아웃"><i class="fas fa-sign-out-alt"></i><span class="nav-btn-text"> 로그아웃</span></button>
         </div>
     </div>
 </nav>
+
+<div id="inapp-banner" class="alert alert-warning rounded-0 mb-0 py-2 px-3 d-flex justify-content-between align-items-center gap-2 hidden">
+    <span>메신저 앱 내 브라우저에서는 로그인·저장이 불안정할 수 있습니다.</span>
+    <button id="btn-open-external" class="btn btn-sm btn-dark text-nowrap">외부 브라우저로 열기</button>
+</div>
 
 <div class="container">
 
@@ -162,11 +226,11 @@
                     </div>
                     <div class="mb-3">
                         <label class="form-label fw-bold">이메일 (ID)</label>
-                        <input type="text" id="login-email" class="form-control" placeholder="이메일 입력 (관리자: admin)">
+                        <input type="email" id="login-email" class="form-control" placeholder="이메일 입력 (관리자: admin)" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" inputmode="email">
                     </div>
                     <div class="mb-4">
                         <label class="form-label fw-bold">비밀번호 (Password)</label>
-                        <input type="password" id="login-pw" class="form-control" placeholder="비밀번호">
+                        <input type="password" id="login-pw" class="form-control" placeholder="비밀번호" autocomplete="current-password" enterkeyhint="go">
                     </div>
                     <button id="btn-login-action" class="btn btn-primary w-100 py-2 fw-bold">로그인</button>
                     <p id="login-error" class="text-danger text-center mt-3 small"></p>
@@ -183,7 +247,7 @@
                 </div>
                 <div class="modal-body">
                     <p class="text-muted">사용할 이름을 입력해주세요.<br>(최초 1회만 입력)</p>
-                    <input type="text" id="input-display-name" class="form-control" placeholder="예: 홍길동">
+                    <input type="text" id="input-display-name" class="form-control" placeholder="예: 홍길동" maxlength="20" enterkeyhint="done">
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-primary w-100" id="btn-save-name">시작하기</button>
@@ -204,7 +268,7 @@
                         <option value="fund">Fund</option>
                     </select>
                 </div>
-                <div class="col-md-7"><input type="text" id="new-name" class="form-control" placeholder="기업명 또는 펀드명"></div>
+                <div class="col-md-7"><input type="text" id="new-name" class="form-control" placeholder="기업명 또는 펀드명" enterkeyhint="done"></div>
                 <div class="col-md-2"><button id="btn-create-session" class="btn btn-success w-100">등록</button></div>
             </div>
         </div>
@@ -386,28 +450,44 @@
     <div id="ic-evaluation" class="hidden">
         <button id="btn-eval-back" class="btn btn-secondary mb-3"><i class="fas fa-arrow-left"></i> 목록으로</button>
         <div class="card p-4">
-            <h4 id="eval-title" class="fw-bold mb-4"></h4>
+            <h4 id="eval-title" class="fw-bold mb-2"></h4>
+            <p id="eval-status-note" class="small text-muted mb-4"></p>
             <h5 class="mb-3 border-bottom pb-2">📊 항목별 평가</h5>
             <div id="criteria-inputs" class="mb-5"></div>
             <h5 class="mb-3 border-bottom pb-2">📝 투자 관련 의견</h5>
-            <div class="mb-3"><label class="fw-bold">1. 투자 해야하는 이유</label><textarea id="comment-pros" class="form-control" rows="2"></textarea></div>
-            <div class="mb-3"><label class="fw-bold">2. 주요 우려사항</label><textarea id="comment-cons" class="form-control" rows="2"></textarea></div>
-            <div class="mb-3"><label class="fw-bold">3. 기대되는 시너지 효과</label><textarea id="comment-synergy" class="form-control" rows="2"></textarea></div>
-            <button id="btn-submit-eval" class="btn btn-primary w-100 py-2 fs-5">평가 제출</button>
+            <div class="mb-3"><label class="fw-bold">1. 투자 해야하는 이유</label><textarea id="comment-pros" class="form-control eval-comment" rows="3"></textarea></div>
+            <div class="mb-3"><label class="fw-bold">2. 주요 우려사항</label><textarea id="comment-cons" class="form-control eval-comment" rows="3"></textarea></div>
+            <div class="mb-3"><label class="fw-bold">3. 기대되는 시너지 효과</label><textarea id="comment-synergy" class="form-control eval-comment" rows="3"></textarea></div>
+            <p id="draft-note" class="small text-muted mb-2"></p>
+            <button type="button" id="btn-submit-eval" class="btn btn-primary w-100 py-2 fs-5">평가 제출</button>
         </div>
     </div>
 </div>
 
 <script type="module">
+    // [M] 전역 오류: 화면 전체를 가리지 않고 토스트로만 표시 (작성 중 텍스트 보호)
+    function showToast(msg, ms = 3500) {
+        const t = document.createElement('div');
+        t.className = 'toast-msg'; t.textContent = msg;
+        document.body.appendChild(t);
+        setTimeout(() => t.remove(), ms);
+    }
+    window.showToast = showToast;
     window.onerror = function(message, source, lineno, colno, error) {
-        document.getElementById('loading-overlay').classList.remove('hidden');
-        document.getElementById('global-error-msg').innerText = "오류 발생: " + message;
-        console.error(error);
+        const m = String(message || '');
+        if (m.includes('ResizeObserver') || m === 'Script error.') return true; // 무해/외부(인앱 브라우저 주입) 오류 무시
+        console.error(error || message);
+        showToast("오류 발생: " + m);
+        return true;
     };
+    window.addEventListener('unhandledrejection', e => {
+        console.error(e.reason);
+        showToast("처리 오류: " + (e.reason?.message || e.reason));
+    });
 
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
     import { getDatabase, ref, set, push, onValue, update, remove } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js";
-    import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut, updateProfile } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
+    import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut, updateProfile, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyCjawYoNR9zABRyr9q9hW_-cd2PntgA_Zs",
@@ -423,6 +503,7 @@
         const app = initializeApp(firebaseConfig);
         const db  = getDatabase(app);
         const auth = getAuth(app);
+        setPersistence(auth, browserLocalPersistence).catch(err => console.warn('persistence', err));
 
         let currentUser           = null;
         let currentUserName       = "";
@@ -433,6 +514,15 @@
         let selectedUsersForChart = [];
         let nameModal             = null;
         let isEditMode            = false;
+        let isSynced              = false;   // [M] onValue 중복 등록 방지
+        let isConnected           = false;   // [M] RTDB 연결 상태
+        let isSubmitting          = false;
+        let draftTimer            = null;
+        const INVALID_KEY_CHARS   = /[.#$\[\]\/]/;   // RTDB 키 금지 문자
+
+        const escapeHtml = (str) => String(str ?? '').replace(/[&<>"']/g, c =>
+            ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+        const draftKey = () => `evalDraft:${currentUser?.uid || 'anon'}:${currentSessionId}`;
 
         let filterState = {
             types:    ['startup', 'fund'],
@@ -481,6 +571,35 @@
             const pwInput = document.getElementById('login-pw');
             if(pwInput) pwInput.addEventListener('keypress', e => { if(e.key === 'Enter') performLogin(); });
 
+            // [M] 모바일 키보드 '완료/이동' 키 대응
+            const nameInput = document.getElementById('input-display-name');
+            if(nameInput) nameInput.addEventListener('keydown', e => { if(e.key === 'Enter' && !e.isComposing) { e.preventDefault(); saveUserName(); } });
+            const newName = document.getElementById('new-name');
+            if(newName) newName.addEventListener('keydown', e => { if(e.key === 'Enter' && !e.isComposing) { e.preventDefault(); createSession(); } });
+
+            // [M] 평가 의견 임시저장 (keyup 아님 → input 이벤트: 한글 IME에서도 동작)
+            document.querySelectorAll('.eval-comment').forEach(el => {
+                el.addEventListener('input', scheduleDraftSave);
+                el.addEventListener('compositionend', scheduleDraftSave);
+                el.addEventListener('blur', saveDraftNow);
+            });
+            // 앱 전환/화면 꺼짐 직전 저장
+            document.addEventListener('visibilitychange', () => { if(document.visibilityState === 'hidden') saveDraftNow(); });
+            window.addEventListener('pagehide', saveDraftNow);
+
+            // [M] 연결 상태 표시
+            onValue(ref(db, '.info/connected'), snap => {
+                isConnected = snap.val() === true;
+                const b = document.getElementById('conn-status');
+                if(b) {
+                    b.className   = 'badge me-2 ' + (isConnected ? 'bg-success' : 'bg-danger');
+                    b.textContent = isConnected ? '온라인' : '오프라인';
+                }
+            });
+
+            // [M] 카카오톡 등 인앱 브라우저 감지 → 외부 브라우저 안내
+            setupInAppBanner();
+
             const anonToggle = document.getElementById('anon-toggle');
             if(anonToggle) anonToggle.addEventListener('change', refreshMonitorView);
 
@@ -503,8 +622,15 @@
                     document.getElementById('login-section').classList.add('hidden');
                     if(currentRole === 'ic' && !user.displayName) {
                         if(nameModal) nameModal.show();
+                        else {
+                            const n = prompt("사용할 이름을 입력해주세요. (최초 1회)");
+                            if(n) { document.getElementById('input-display-name').value = n; saveUserName(); }
+                        }
                     } else {
-                        goHome();
+                        // [M] 이미 화면이 열려 있으면(재인증 이벤트) 작성 중 화면을 유지
+                        const onScreen = ['admin-dashboard','admin-monitoring','ic-dashboard','ic-evaluation']
+                            .some(id => !document.getElementById(id).classList.contains('hidden'));
+                        if(!onScreen) goHome();
                         syncData();
                     }
                 } else {
@@ -520,6 +646,25 @@
         function bindClick(id, func) {
             const el = document.getElementById(id);
             if(el) el.addEventListener('click', func);
+        }
+
+        function setupInAppBanner() {
+            const ua = navigator.userAgent || '';
+            const isKakao = /KAKAOTALK/i.test(ua);
+            const isInApp = isKakao || /NAVER|Line\/|Instagram|FBAN|FBAV|everytimeApp|DaumApps/i.test(ua);
+            if(!isInApp) return;
+            document.getElementById('inapp-banner').classList.remove('hidden');
+            bindClick('btn-open-external', () => {
+                const url = location.href;
+                if(isKakao) {
+                    location.href = 'kakaotalk://web/openExternal?url=' + encodeURIComponent(url);
+                } else if(/Android/i.test(ua)) {
+                    location.href = 'intent://' + url.replace(/^https?:\/\//, '') + '#Intent;scheme=https;package=com.android.chrome;end';
+                } else {
+                    navigator.clipboard?.writeText(url).catch(() => {});
+                    alert('주소가 복사되었습니다. Safari에 붙여넣어 열어주세요.\n' + url);
+                }
+            });
         }
 
         function calcSessionAvg(s) {
@@ -634,12 +779,13 @@
         }
 
         async function performLogin() {
-            let email = document.getElementById('login-email').value.trim();
+            let email = document.getElementById('login-email').value.trim().toLowerCase();
             const pw  = document.getElementById('login-pw').value;
             const errorMsg = document.getElementById('login-error');
             errorMsg.innerText = "";
             if(!email || !pw) return alert("입력값을 확인해주세요.");
             if(email === 'admin') email = 'admin@bs-invest.com';
+            document.activeElement?.blur();
             document.getElementById('loading-overlay').classList.remove('hidden');
             try {
                 await signInWithEmailAndPassword(auth, email, pw);
@@ -647,7 +793,8 @@
                 document.getElementById('loading-overlay').classList.add('hidden');
                 let msg = "로그인 실패: ";
                 if(error.code === 'auth/user-not-found')      msg += "계정 없음";
-                else if(error.code === 'auth/wrong-password') msg += "비밀번호 오류";
+                else if(error.code === 'auth/wrong-password' || error.code === 'auth/invalid-login-credentials' || error.code === 'auth/invalid-credential') msg += "이메일 또는 비밀번호 오류";
+                else if(error.code === 'auth/network-request-failed') msg += "네트워크 연결을 확인해주세요";
                 else msg += error.message;
                 errorMsg.innerText = msg;
             }
@@ -658,13 +805,17 @@
         function saveUserName() {
             const inputName = document.getElementById('input-display-name').value.trim();
             if(!inputName) return alert("이름을 입력해주세요.");
+            // [M] 이름이 DB 키로 쓰이므로 . # $ [ ] / 사용 불가 (사용 시 저장이 조용히 실패)
+            if(INVALID_KEY_CHARS.test(inputName)) return alert("이름에 . # $ [ ] / 문자는 사용할 수 없습니다.");
+            if(currentUserName && inputName !== currentUserName &&
+               !confirm("이름을 변경하면 기존에 제출한 평가가 새 이름과 연결되지 않습니다.\n계속하시겠습니까?")) return;
             updateProfile(auth.currentUser, { displayName: inputName }).then(() => {
                 currentUserName = inputName;
                 updateUserDisplay();
                 if(nameModal) nameModal.hide();
                 goHome();
                 syncData();
-            });
+            }).catch(err => alert("이름 저장 실패: " + err.message));
         }
 
         function openNameSettings() {
@@ -685,6 +836,7 @@
         }
 
         function goHome() {
+            if(!isSubmitting) saveDraftNow();   // [M] 뒤로가기 시 작성 중 내용 보관
             hideAllSections();
             if(currentRole === 'admin') document.getElementById('admin-dashboard').classList.remove('hidden');
             else                        document.getElementById('ic-dashboard').classList.remove('hidden');
@@ -696,6 +848,8 @@
         }
 
         function syncData() {
+            if(isSynced) return;
+            isSynced = true;
             onValue(ref(db, 'sessions'), (snapshot) => {
                 sessionsData = snapshot.val() || {};
                 if(currentRole === 'admin') {
@@ -705,6 +859,9 @@
                 } else {
                     renderIcList();
                 }
+            }, (err) => {
+                isSynced = false;
+                showToast("데이터 동기화 실패: " + err.message, 5000);
             });
         }
 
@@ -756,7 +913,7 @@
                     tr.innerHTML = `
                         <td class="text-muted">${index + 1}</td>
                         <td><span class="badge bg-${s.type === 'startup' ? 'primary' : 'success'}">${s.type.toUpperCase()}</span></td>
-                        <td class="fw-bold">${s.name}</td>
+                        <td class="fw-bold">${escapeHtml(s.name)}</td>
                         <td>${date}</td>
                         <td class="text-center">${actionHtml}</td>
                     `;
@@ -810,7 +967,7 @@
                     trH.innerHTML = `
                         <td class="text-muted">${idx + 1}</td>
                         <td><span class="badge bg-${s.type === 'startup' ? 'primary' : 'success'}">${s.type.toUpperCase()}</span></td>
-                        <td class="fw-bold text-start">${s.name}</td>
+                        <td class="fw-bold text-start">${escapeHtml(s.name)}</td>
                         <td>${date}</td>
                         <td>${count}명</td>
                         <td class="fw-bold text-primary">${avg !== null ? avg : '-'}</td>
@@ -955,10 +1112,11 @@
                 const e = evals[user];
                 // ★ 변경: '심사위원' → '익명'
                 const displayName = isAnon ? `익명${idx + 1}` : user;
-                const prefix = `<strong>${displayName}:</strong> `;
-                if(e.pros)    prosDiv.innerHTML += `<div class="feedback-box">${prefix}${e.pros}</div>`;
-                if(e.cons)    consDiv.innerHTML += `<div class="feedback-box cons">${prefix}${e.cons}</div>`;
-                if(e.synergy) synDiv.innerHTML  += `<div class="feedback-box syn">${prefix}${e.synergy}</div>`;
+                const prefix = `<strong>${escapeHtml(displayName)}:</strong> `;
+                // [M] HTML 이스케이프: '<' 등이 포함된 의견이 사라지거나 화면이 깨지는 문제 방지
+                if(e.pros)    prosDiv.innerHTML += `<div class="feedback-box">${prefix}${escapeHtml(e.pros)}</div>`;
+                if(e.cons)    consDiv.innerHTML += `<div class="feedback-box cons">${prefix}${escapeHtml(e.cons)}</div>`;
+                if(e.synergy) synDiv.innerHTML  += `<div class="feedback-box syn">${prefix}${escapeHtml(e.synergy)}</div>`;
             });
             if(!hasData) prosDiv.innerHTML = "<small class='text-muted'>아직 의견이 없습니다.</small>";
         }
@@ -1011,7 +1169,7 @@
                 // ★ 변경: '심사위원' → '익명'
                 const displayName = isAnon ? `익명${idx + 1}` : user;
                 const isChecked   = selectedUsersForChart.includes(user) ? 'checked' : '';
-                controlsHTML += `<label><input type="checkbox" class="chart-checkbox" value="${user}" ${isChecked}> ${displayName}</label>`;
+                controlsHTML += `<label><input type="checkbox" class="chart-checkbox" value="${escapeHtml(user)}" ${isChecked}> ${escapeHtml(displayName)}</label>`;
             });
             controlsDiv.innerHTML = controlsHTML;
 
@@ -1043,7 +1201,10 @@
                 type: 'radar',
                 data: { labels, datasets },
                 options: {
-                    scales: { r: { min: 0, max: 5, ticks: { stepSize: 1 } } },
+                    responsive: true,
+                    maintainAspectRatio: false,   // [M] 컨테이너 높이에 맞춤 (모바일 잘림 방지)
+                    scales: { r: { min: 0, max: 5, ticks: { stepSize: 1 },
+                                   pointLabels: { font: { size: window.innerWidth < 768 ? 11 : 13 } } } },
                     plugins: { legend: { position: 'bottom' } }
                 }
             });
@@ -1066,7 +1227,7 @@
                     btn.innerHTML = `
                         <div class="d-flex align-items-center">
                             <span class="badge bg-${s.type==='startup'?'primary':'success'} me-3 p-2">${s.type.toUpperCase()}</span>
-                            <span class="fw-bold fs-5">${s.name}</span>
+                            <span class="fw-bold fs-5">${escapeHtml(s.name)}</span>
                         </div>
                         ${isDone
                             ? '<span class="text-success fw-bold"><i class="fas fa-check-circle"></i> 평가 완료</span>'
@@ -1086,46 +1247,137 @@
         function openEvaluation(key) {
             currentSessionId = key;
             const session    = sessionsData[key];
+            if(!session) return;
+            const existing   = session.evaluations?.[currentUserName] || null;   // [M] 기존 제출본
+            let draft = null;
+            try { draft = JSON.parse(localStorage.getItem(draftKey()) || 'null'); } catch(_) {}
+            // 다른 기기에서 더 최근에 제출한 경우 임시저장본은 폐기
+            if(draft && existing && existing.timestamp >= draft.savedAt) {
+                draft = null;
+                try { localStorage.removeItem(draftKey()); } catch(_) {}
+            }
+
             document.getElementById('ic-dashboard').classList.add('hidden');
             document.getElementById('ic-evaluation').classList.remove('hidden');
             document.getElementById('eval-title').innerText = session.name;
+
             const container = document.getElementById('criteria-inputs');
-            container.innerHTML = "";
+            let html = "";
             criteria[session.type].forEach((item, idx) => {
-                container.innerHTML += `
+                const v = draft?.scores?.[idx] ?? existing?.scores?.[idx] ?? 3;
+                html += `
                     <div class="mb-4">
-                        <label class="d-flex justify-content-between">
-                            <span class="fw-bold">${item}</span>
-                            <span id="score-val-${idx}" class="badge bg-primary fs-6">3.0</span>
+                        <label class="d-flex justify-content-between" for="criteria-${idx}">
+                            <span class="fw-bold">${escapeHtml(item)}</span>
+                            <span id="score-val-${idx}" class="badge bg-primary fs-6">${Number(v).toFixed(1)}</span>
                         </label>
-                        <input type="range" class="form-range" min="0" max="5" step="0.5" id="criteria-${idx}" value="3"
-                            oninput="document.getElementById('score-val-${idx}').innerText=this.value">
+                        <input type="range" class="form-range criteria-range" min="0" max="5" step="0.5" id="criteria-${idx}" value="${v}" data-idx="${idx}">
                         <div class="d-flex justify-content-between small text-muted">
                             <span>0</span><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span>
                         </div>
                     </div>`;
             });
-            document.getElementById('comment-pros').value    = "";
-            document.getElementById('comment-cons').value    = "";
-            document.getElementById('comment-synergy').value = "";
+            container.innerHTML = html;
+            container.querySelectorAll('.criteria-range').forEach(el =>
+                el.addEventListener('input', e => {
+                    document.getElementById(`score-val-${e.target.dataset.idx}`).innerText = Number(e.target.value).toFixed(1);
+                    scheduleDraftSave();
+                })
+            );
+
+            // [M] 기존 제출 의견 / 임시저장본 복원 (이전: 항상 빈칸으로 초기화 → "저장 안 됨"으로 보였음)
+            const src = draft || existing || {};
+            document.getElementById('comment-pros').value    = src.pros    || "";
+            document.getElementById('comment-cons').value    = src.cons    || "";
+            document.getElementById('comment-synergy').value = src.synergy || "";
+
+            const note = document.getElementById('eval-status-note');
+            if(existing) {
+                note.innerHTML = `<i class="fas fa-check-circle text-success"></i> ${new Date(existing.timestamp).toLocaleString()} 제출됨 · 수정 후 다시 제출하면 덮어씁니다.`;
+                document.getElementById('btn-submit-eval').innerText = "수정 제출";
+            } else {
+                note.textContent = "";
+                document.getElementById('btn-submit-eval').innerText = "평가 제출";
+            }
+            document.getElementById('draft-note').textContent =
+                draft ? `💾 이 기기에 임시저장된 작성본을 불러왔습니다 (${new Date(draft.savedAt).toLocaleTimeString()})` : "";
+            window.scrollTo(0, 0);
         }
 
-        function submitEvaluation() {
+        function collectEvaluation() {
             const session = sessionsData[currentSessionId];
-            const scores  = [];
-            criteria[session.type].forEach((_, idx) =>
-                scores.push(parseFloat(document.getElementById(`criteria-${idx}`).value))
-            );
-            const feedback = {
-                user:      currentUserName,
+            if(!session) return null;
+            const scores = criteria[session.type].map((_, idx) =>
+                parseFloat(document.getElementById(`criteria-${idx}`)?.value ?? 3));
+            return {
                 scores,
-                pros:      document.getElementById('comment-pros').value,
-                cons:      document.getElementById('comment-cons').value,
-                synergy:   document.getElementById('comment-synergy').value,
-                timestamp: Date.now()
+                pros:    document.getElementById('comment-pros').value,
+                cons:    document.getElementById('comment-cons').value,
+                synergy: document.getElementById('comment-synergy').value
             };
-            set(ref(db, `sessions/${currentSessionId}/evaluations/${currentUserName}`), feedback)
-                .then(() => { alert("제출되었습니다."); goHome(); });
+        }
+
+        function saveDraftNow() {
+            if(!currentSessionId || document.getElementById('ic-evaluation').classList.contains('hidden')) return;
+            const d = collectEvaluation();
+            if(!d) return;
+            try {
+                localStorage.setItem(draftKey(), JSON.stringify({ ...d, savedAt: Date.now() }));
+                document.getElementById('draft-note').textContent = `💾 임시저장됨 (${new Date().toLocaleTimeString()}) · 제출 전까지 이 기기에만 보관`;
+            } catch(_) { /* 사파리 개인정보 보호 모드 등: 무시 */ }
+        }
+        function scheduleDraftSave() {
+            clearTimeout(draftTimer);
+            draftTimer = setTimeout(saveDraftNow, 600);
+        }
+
+        async function submitEvaluation(e) {
+            e?.preventDefault?.();
+            if(isSubmitting) return;
+
+            // [M] 한글 IME 조합 중인 마지막 글자 확정 → 약간 대기 후 값 읽기
+            document.activeElement?.blur();
+            await new Promise(r => setTimeout(r, 80));
+
+            const session = sessionsData[currentSessionId];
+            if(!session) return alert("안건 정보를 찾을 수 없습니다. 목록에서 다시 선택해주세요.");
+            if(!auth.currentUser) return alert("로그인이 만료되었습니다. 작성 내용은 임시저장되어 있으니 다시 로그인해주세요.");
+            if(!currentUserName) return alert("이름 설정이 필요합니다. 상단 ⚙ 버튼에서 이름을 설정해주세요.");
+            if(INVALID_KEY_CHARS.test(currentUserName))
+                return alert("이름에 . # $ [ ] / 문자가 있어 저장할 수 없습니다. ⚙ 버튼에서 이름을 변경해주세요.");
+
+            const d = collectEvaluation();
+            saveDraftNow();   // 제출 실패 대비 백업
+            const feedback = { user: currentUserName, ...d, timestamp: Date.now() };
+
+            const btn = document.getElementById('btn-submit-eval');
+            const original = btn.innerText;
+            isSubmitting = true; btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>저장 중...';
+
+            if(!isConnected) showToast("현재 오프라인입니다. 연결되면 자동 전송됩니다. 창을 닫지 마세요.", 5000);
+
+            const writeP   = set(ref(db, `sessions/${currentSessionId}/evaluations/${currentUserName}`), feedback);
+            const timeoutP = new Promise((_, rej) => setTimeout(() => rej(new Error('TIMEOUT')), 15000));
+            try {
+                await Promise.race([writeP, timeoutP]);
+                try { localStorage.removeItem(draftKey()); } catch(_) {}
+                alert("제출되었습니다.");
+                goHome();
+            } catch(err) {
+                console.error(err);
+                if(err.message === 'TIMEOUT') {
+                    alert("서버 응답이 지연되고 있습니다.\n작성 내용은 임시저장되었고, 연결되면 자동 전송됩니다.\n잠시 후 목록에서 '평가 완료' 표시를 확인해주세요.");
+                    writeP.then(() => { try { localStorage.removeItem(draftKey()); } catch(_) {} showToast("✅ 지연되었던 평가가 제출 완료되었습니다."); })
+                          .catch(e2 => alert("제출 실패: " + e2.message));
+                } else if(String(err.code || err.message).includes('PERMISSION_DENIED')) {
+                    alert("⚠️ 저장 권한이 없습니다. 로그아웃 후 다시 로그인해주세요.\n(작성 내용은 이 기기에 임시저장되어 있습니다)");
+                } else {
+                    alert("제출 실패: " + err.message + "\n(작성 내용은 이 기기에 임시저장되어 있습니다)");
+                }
+            } finally {
+                isSubmitting = false; btn.disabled = false; btn.innerText = original;
+            }
         }
 
     } catch(e) {
