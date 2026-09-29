@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="format-detection" content="telephone=no">
-    <title>BS Investment Committee Platform V8.6</title>
+    <title>BS Investment Committee Platform V9.1</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" defer></script>
@@ -128,6 +128,41 @@
         .chart-controls label { font-size: 0.85rem; margin-right: 15px; cursor: pointer; }
         #loading-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,1); z-index: 9999; display: flex; justify-content: center; align-items: center; flex-direction: column; transition: opacity 0.5s ease; }
         #global-error-msg { color: red; margin-top: 20px; font-weight: bold; text-align: center; padding: 20px; }
+
+        /* ===== [V9] AI 요약 / 1장 보고서 ===== */
+        .ai-sec h6 { font-weight: 700; margin: 14px 0 6px; }
+        .ai-sec ul { padding-left: 1.1rem; margin-bottom: 0; }
+        .ai-sec li { margin-bottom: 4px; }
+        .ai-oneline { background: #eef4ff; border-left: 4px solid #0d6efd; padding: 10px 12px; border-radius: 6px; font-weight: 600; }
+        .badge-stale { background: #fff3cd; color: #664d03; }
+        .std-flag { color: #dc3545; font-weight: 700; }
+        #report-host { position: fixed; left: -10000px; top: 0; }
+        .rpt { width: 794px; padding: 40px 46px 30px; background: #fff; color: #212529;
+               font-family: 'Pretendard','Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic',sans-serif; font-size: 12px; line-height: 1.5; }
+        .rpt-head { border-bottom: 3px solid #0b2e59; padding-bottom: 10px; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: flex-end; }
+        .rpt-head .t1 { font-size: 11px; color: #6c757d; letter-spacing: .5px; }
+        .rpt-head .t2 { font-size: 21px; font-weight: 800; color: #0b2e59; }
+        .rpt-head .t3 { font-size: 11px; color: #495057; text-align: right; }
+        .rpt-kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 14px; }
+        .rpt-kpi { border: 1px solid #dee2e6; border-radius: 6px; padding: 8px 10px; }
+        .rpt-kpi .k { font-size: 10px; color: #6c757d; }
+        .rpt-kpi .v { font-size: 17px; font-weight: 800; color: #0b2e59; }
+        .rpt-row { display: grid; grid-template-columns: 300px 1fr; gap: 14px; margin-bottom: 12px; }
+        .rpt table { width: 100%; border-collapse: collapse; font-size: 11px; }
+        .rpt th, .rpt td { border-bottom: 1px solid #e9ecef; padding: 5px 6px; text-align: center; white-space: nowrap; }
+        .rpt th { background: #f1f3f5; font-weight: 700; }
+        .rpt td:first-child, .rpt th:first-child { text-align: left; }
+        .rpt-box { border: 1px solid #dee2e6; border-radius: 6px; padding: 8px 12px; margin-bottom: 9px; }
+        .rpt-box h4 { font-size: 12.5px; font-weight: 800; margin: 0 0 4px; }
+        .rpt-box ul { margin: 0; padding-left: 16px; }
+        .rpt-box li { margin-bottom: 2px; }
+        .rpt-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
+        .rpt-foot { margin-top: 10px; font-size: 9.5px; color: #868e96; border-top: 1px solid #dee2e6; padding-top: 6px; }
+        @media print {
+            body.printing > *:not(#report-host) { display: none !important; }
+            body.printing #report-host { position: static; }
+            @page { size: A4; margin: 0; }
+        }
 
         /* ===== [M] 모바일 최적화 (V8.6) ===== */
         .feedback-box { white-space: pre-wrap; word-break: break-word; }   /* 줄바꿈 보존 */
@@ -257,7 +292,11 @@
     </div>
 
     <div id="admin-dashboard" class="hidden">
-        <h4 class="mb-3">관리자 대시보드</h4>
+        <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+            <h4 class="mb-0">관리자 대시보드</h4>
+            <button id="btn-backup" class="btn btn-sm btn-outline-dark"><i class="fas fa-download"></i> DB 백업(JSON)</button>
+        </div>
+        <div id="backup-reminder" class="alert alert-warning py-2 small hidden">⚠️ 최근 7일간 백업 기록이 없습니다. 상단 <b>DB 백업</b> 버튼으로 백업 파일을 보관해 주세요.</div>
         
         <div class="card p-4 mb-4">
             <h5>➕ 신규 안건 등록</h5>
@@ -407,6 +446,12 @@
                 </div>
             </div>
 
+            <div class="d-flex flex-wrap gap-2 mb-3">
+                <button id="btn-ai-summary" class="btn btn-sm btn-primary"><i class="fas fa-edit"></i> 종합 요약 작성·편집</button>
+                <button id="btn-pdf-report" class="btn btn-sm btn-outline-dark"><i class="fas fa-file-pdf"></i> 1장 요약 PDF</button>
+                <span id="ai-summary-state" class="small text-muted align-self-center"></span>
+            </div>
+
             <div class="invest-status-bar">
                 <span class="fw-bold me-2">📌 투자진행 여부:</span>
                 <button id="btn-invest-proceed"   class="btn btn-sm btn-outline-primary">✅ 진행</button>
@@ -464,6 +509,37 @@
     </div>
 </div>
 
+<!-- [V9.1] 종합 요약 편집 모달 (AI/API 미사용) -->
+<div class="modal fade" id="aiSummaryModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable modal-fullscreen-sm-down">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold">📝 종합 요약 <small id="ai-modal-sub" class="text-muted fs-6"></small></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="sum-stale" class="alert alert-warning py-2 small hidden">요약 저장 이후 평가가 추가·수정되었습니다. <b>자동 초안 다시 만들기</b>로 갱신하거나 내용을 직접 보완하세요.</div>
+                <p class="small text-muted">위원 의견에서 자동으로 발췌한 초안입니다. 문장을 다듬거나 합쳐서 <b>저장</b>하면 1장 PDF에 그대로 반영됩니다. (항목은 한 줄에 하나씩, 최대 4개)</p>
+                <div class="mb-2"><label class="fw-bold small">종합 판단 (한 줄)</label><textarea id="sum-headline" class="form-control" rows="2" maxlength="120"></textarea></div>
+                <div class="mb-3"><label class="fw-bold small">위원회 분위기·근거</label><textarea id="sum-consensus" class="form-control" rows="2"></textarea></div>
+                <div class="row g-2">
+                    <div class="col-md-6"><label class="fw-bold small text-primary">👍 투자 포인트</label><textarea id="sum-strengths" class="form-control" rows="4"></textarea></div>
+                    <div class="col-md-6"><label class="fw-bold small text-danger">⚠️ 주요 우려사항</label><textarea id="sum-concerns" class="form-control" rows="4"></textarea></div>
+                    <div class="col-md-6"><label class="fw-bold small text-success">🤝 기대 시너지</label><textarea id="sum-synergies" class="form-control" rows="4"></textarea></div>
+                    <div class="col-md-6"><label class="fw-bold small">🔎 추가 논의·확인 필요</label><textarea id="sum-discussion" class="form-control" rows="4"></textarea></div>
+                </div>
+                <p id="sum-meta" class="small text-muted mt-2 mb-0"></p>
+            </div>
+            <div class="modal-footer flex-wrap gap-2">
+                <button type="button" class="btn btn-outline-secondary" id="btn-ai-regen"><i class="fas fa-magic"></i> 자동 초안 다시 만들기</button>
+                <button type="button" class="btn btn-primary" id="btn-sum-save"><i class="fas fa-save"></i> 저장</button>
+                <button type="button" class="btn btn-dark" id="btn-ai-to-pdf"><i class="fas fa-file-pdf"></i> 저장 후 1장 PDF</button>
+            </div>
+        </div>
+    </div>
+</div>
+<div id="report-host"></div>
+
 <script type="module">
     // [M] 전역 오류: 화면 전체를 가리지 않고 토스트로만 표시 (작성 중 텍스트 보호)
     function showToast(msg, ms = 3500) {
@@ -486,7 +562,7 @@
     });
 
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
-    import { getDatabase, ref, set, push, onValue, update, remove } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js";
+    import { getDatabase, ref, set, push, onValue, update, remove, get } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js";
     import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut, updateProfile, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
 
     const firebaseConfig = {
@@ -503,6 +579,17 @@
         const app = initializeApp(firebaseConfig);
         const db  = getDatabase(app);
         const auth = getAuth(app);
+
+        // ===== [V9] 운영 설정 =====
+        const ADMIN_EMAILS      = ['admin@bs-invest.com'];   // 기존 방식 유지 (roles 노드와 병행)
+        const APPCHECK_SITE_KEY = '';                         // reCAPTCHA v3 사이트 키 입력 시 App Check 활성화
+        const HTML2PDF_URL      = 'https://cdn.jsdelivr.net/npm/html2pdf.js@0.10.1/dist/html2pdf.bundle.min.js';
+
+        if(APPCHECK_SITE_KEY) {
+            import("https://www.gstatic.com/firebasejs/9.22.0/firebase-app-check.js")
+                .then(m => m.initializeAppCheck(app, { provider: new m.ReCaptchaV3Provider(APPCHECK_SITE_KEY), isTokenAutoRefreshEnabled: true }))
+                .catch(err => console.warn('AppCheck', err));
+        }
         setPersistence(auth, browserLocalPersistence).catch(err => console.warn('persistence', err));
 
         let currentUser           = null;
@@ -549,6 +636,12 @@
             bindClick('btn-submit-eval',      submitEvaluation);
             bindClick('btn-excel-download',   downloadExcel);
             bindClick('btn-toggle-edit-mode', toggleEditMode);
+            bindClick('btn-backup',           downloadBackup);
+            bindClick('btn-ai-summary',       openSummaryEditor);
+            bindClick('btn-ai-regen',         () => fillSummaryForm(buildAutoSummary(sessionsData[currentSessionId]), true));
+            bindClick('btn-sum-save',         () => saveSummary());
+            bindClick('btn-pdf-report',       generatePdfReport);
+            bindClick('btn-ai-to-pdf',        async () => { if(await saveSummary(true)) { summaryModal?.hide(); generatePdfReport(); } });
 
             bindClick('btn-toggle-filter', () =>
                 document.getElementById('filter-panel').classList.toggle('hidden')
@@ -603,14 +696,18 @@
             const anonToggle = document.getElementById('anon-toggle');
             if(anonToggle) anonToggle.addEventListener('change', refreshMonitorView);
 
-            onAuthStateChanged(auth, (user) => {
+            onAuthStateChanged(auth, async (user) => {
                 document.getElementById('loading-overlay').classList.add('hidden');
                 if(!nameModal && window.bootstrap)
                     nameModal = new bootstrap.Modal(document.getElementById('nameSettingModal'));
 
                 if (user) {
                     currentUser = user;
-                    if(user.email.startsWith("admin@")) {
+                    // [V9] 관리자 판정: 기존 이메일 규칙 + DB roles/{uid} === 'admin' (둘 중 하나)
+                    let roleAdmin = false;
+                    try { roleAdmin = (await get(ref(db, `roles/${user.uid}`))).val() === 'admin'; } catch(_) {}
+                    const email = (user.email || '').toLowerCase();
+                    if(email.startsWith("admin@") || ADMIN_EMAILS.includes(email) || roleAdmin) {
                         currentRole     = 'admin';
                         currentUserName = "관리자";
                     } else {
@@ -809,7 +906,9 @@
             if(INVALID_KEY_CHARS.test(inputName)) return alert("이름에 . # $ [ ] / 문자는 사용할 수 없습니다.");
             if(currentUserName && inputName !== currentUserName &&
                !confirm("이름을 변경하면 기존에 제출한 평가가 새 이름과 연결되지 않습니다.\n계속하시겠습니까?")) return;
-            updateProfile(auth.currentUser, { displayName: inputName }).then(() => {
+            updateProfile(auth.currentUser, { displayName: inputName })
+            .then(() => auth.currentUser.getIdToken(true))   // [V9] 토큰 갱신 → DB 규칙이 새 이름을 인식
+            .then(() => {
                 currentUserName = inputName;
                 updateUserDisplay();
                 if(nameModal) nameModal.hide();
@@ -838,7 +937,11 @@
         function goHome() {
             if(!isSubmitting) saveDraftNow();   // [M] 뒤로가기 시 작성 중 내용 보관
             hideAllSections();
-            if(currentRole === 'admin') document.getElementById('admin-dashboard').classList.remove('hidden');
+            if(currentRole === 'admin') {
+                document.getElementById('admin-dashboard').classList.remove('hidden');
+                let last = 0; try { last = +localStorage.getItem('lastBackupAt') || 0; } catch(_) {}
+                document.getElementById('backup-reminder').classList.toggle('hidden', Date.now() - last < 7*864e5);
+            }
             else                        document.getElementById('ic-dashboard').classList.remove('hidden');
         }
 
@@ -1092,6 +1195,7 @@
             if(!session) return;
             document.getElementById('monitor-title').innerText = `📊 ${session.name} 분석 결과`;
             renderInvestStatusLabel(session.investStatus || null);
+            renderAiState(session);
             renderFeedback();
             calculateAndRenderChart(session);
         }
@@ -1348,7 +1452,7 @@
 
             const d = collectEvaluation();
             saveDraftNow();   // 제출 실패 대비 백업
-            const feedback = { user: currentUserName, ...d, timestamp: Date.now() };
+            const feedback = { user: currentUserName, uid: auth.currentUser.uid, ...d, timestamp: Date.now() };
 
             const btn = document.getElementById('btn-submit-eval');
             const original = btn.innerText;
@@ -1357,7 +1461,15 @@
 
             if(!isConnected) showToast("현재 오프라인입니다. 연결되면 자동 전송됩니다. 창을 닫지 마세요.", 5000);
 
-            const writeP   = set(ref(db, `sessions/${currentSessionId}/evaluations/${currentUserName}`), feedback);
+            // [V9] 기존 제출본은 evalHistory에 보관 후 덮어쓰기 (한 번의 원자적 업데이트, 기존 데이터 삭제 없음)
+            const basePath = `sessions/${currentSessionId}`;
+            const prev     = session.evaluations?.[currentUserName];
+            const updates  = { [`${basePath}/evaluations/${currentUserName}`]: feedback };
+            if(prev) {
+                const hKey = push(ref(db, `${basePath}/evalHistory/${currentUserName}`)).key;
+                updates[`${basePath}/evalHistory/${currentUserName}/${hKey}`] = { ...prev, archivedAt: Date.now() };
+            }
+            const writeP   = update(ref(db), updates);
             const timeoutP = new Promise((_, rej) => setTimeout(() => rej(new Error('TIMEOUT')), 15000));
             try {
                 await Promise.race([writeP, timeoutP]);
@@ -1377,6 +1489,312 @@
                 }
             } finally {
                 isSubmitting = false; btn.disabled = false; btn.innerText = original;
+            }
+        }
+
+
+        // =====================================================================
+        // [V9] 수동 백업 (Spark 요금제용) — 읽기 전용, DB 변경 없음
+        // =====================================================================
+        async function downloadBackup() {
+            try {
+                const snap = await get(ref(db, 'sessions'));
+                const payload = { exportedAt: new Date().toISOString(), exportedBy: currentUser?.email || '', sessions: snap.val() || {} };
+                const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+                const ts   = new Date().toISOString().slice(0,16).replace(/[-:T]/g, '');
+                const a    = document.createElement('a');
+                a.href = URL.createObjectURL(blob);
+                a.download = `IC_backup_${ts}.json`;
+                document.body.appendChild(a); a.click(); a.remove();
+                setTimeout(() => URL.revokeObjectURL(a.href), 3000);
+                try { localStorage.setItem('lastBackupAt', String(Date.now())); } catch(_) {}
+                document.getElementById('backup-reminder').classList.add('hidden');
+                showToast('✅ 백업 파일을 저장했습니다. 사내 드라이브에 보관해 주세요.');
+            } catch(err) {
+                alert('백업 실패: ' + err.message);
+            }
+        }
+
+        // =====================================================================
+        // [V9] 통계 계산 (보고서/AI 공용)
+        // =====================================================================
+        function computeStats(session) {
+            const evals  = session.evaluations || {};
+            const users  = Object.keys(evals).sort();
+            const labels = criteria[session.type] || [];
+            const rows = labels.map((label, i) => {
+                const vals = users.map(u => Number(evals[u].scores?.[i])).filter(v => !isNaN(v));
+                const n    = vals.length;
+                const avg  = n ? vals.reduce((a,b) => a+b, 0) / n : 0;
+                const std  = n ? Math.sqrt(vals.reduce((a,b) => a + (b-avg)**2, 0) / n) : 0;
+                return { label, avg: +avg.toFixed(2), max: n ? Math.max(...vals) : 0, min: n ? Math.min(...vals) : 0, std: +std.toFixed(2) };
+            });
+            const totalAvg = rows.length && users.length ? +(rows.reduce((a,r) => a + r.avg, 0) / rows.length).toFixed(2) : 0;
+            const latestTs = users.reduce((m,u) => Math.max(m, evals[u].timestamp || 0), 0);
+            return { users, rows, totalAvg, count: users.length, latestTs };
+        }
+
+        function aiIsStale(session) {
+            const ai = session.reportSummary;
+            if(!ai) return false;
+            const st = computeStats(session);
+            return ai.basis?.count !== st.count || ai.basis?.latestTs !== st.latestTs;
+        }
+
+        function renderAiState(session) {
+            const el = document.getElementById('ai-summary-state');
+            const ai = session.reportSummary;
+            if(!ai) { el.innerHTML = '종합 요약 미작성 (PDF 출력 시 자동 초안 사용)'; return; }
+            el.innerHTML = `요약 저장: ${new Date(ai.savedAt).toLocaleString()}` +
+                (aiIsStale(session) ? ' <span class="badge badge-stale">평가 변경됨 · 갱신 권장</span>' : '');
+        }
+
+        // =====================================================================
+        // [V9.1] 종합 요약 — AI/API 없이 규칙 기반 자동 초안 + 관리자 편집
+        // =====================================================================
+        let summaryModal = null;
+
+        // 의견 문장을 구(句) 단위로 분리
+        function splitPhrases(text) {
+            return String(text || '')
+                .split(/\r?\n|(?<=[.!?。])\s+|(?<=다\.)|[•·▪■◦;]|\s-\s|^\s*-\s*|\d+\)\s|\d+\.\s(?=\D)/m)
+                .map(x => (x || '').replace(/^[\s\-–•·\d.)]+/, '').replace(/[\s.]+$/, '').trim())
+                .filter(x => x.length >= 4);
+        }
+        const clip = (t, n = 70) => t.length > n ? t.slice(0, n - 1) + '…' : t;
+        const norm = t => t.replace(/[\s.,·~\-()]/g, '').toLowerCase();
+
+        // 위원별로 돌아가며 1개씩 뽑아 다양한 의견이 고르게 들어가도록 (최대 max개, 중복 제거)
+        function pickPhrases(evals, users, field, max = 4) {
+            const lists = users.map(u => splitPhrases(evals[u][field]));
+            const out = [], seen = new Set();
+            for(let round = 0; out.length < max && lists.some(l => l.length > round); round++) {
+                for(const l of lists) {
+                    if(out.length >= max) break;
+                    const ph = l[round];
+                    if(!ph) continue;
+                    const k = norm(ph);
+                    if([...seen].some(x => x.includes(k) || k.includes(x))) continue;
+                    seen.add(k); out.push(clip(ph));
+                }
+            }
+            return out;
+        }
+
+        function buildAutoSummary(session) {
+            const st    = computeStats(session);
+            const evals = session.evaluations || {};
+            const byAvg = [...st.rows].sort((a,b) => b.avg - a.avg);
+            const hi = byAvg[0], lo = byAvg.at(-1);
+            const disagree = st.rows.filter(r => r.std >= 1.0);
+            const t = st.totalAvg;
+            const tone = t >= 4.0 ? '전반적으로 긍정적 평가' : t >= 3.0 ? '긍정·신중 의견이 혼재' : '신중 검토 의견 우세';
+
+            const headline = `종합 ${t.toFixed(1)}점(5점 만점)으로 ${tone} — 강점 '${hi?.label}', 보완 필요 '${lo?.label}'`;
+            const consensus = `위원 ${st.count}명 참여. 최고 평가 항목은 ${hi?.label}(${hi?.avg.toFixed(1)}), 최저 항목은 ${lo?.label}(${lo?.avg.toFixed(1)})임. ` +
+                (disagree.length ? `${disagree.map(r => r.label).join('·')} 항목은 위원 간 평가 편차가 큼(σ≥1.0).` : '항목별 위원 간 평가 편차는 크지 않음.');
+
+            const discussion = [];
+            disagree.forEach(r => discussion.push(`${r.label}: 위원 간 평가 편차 큼(최고 ${r.max} / 최저 ${r.min}) → 근거 공유 및 추가 논의`));
+            st.rows.filter(r => r.avg < 3.0 && !disagree.includes(r))
+                   .forEach(r => discussion.push(`${r.label}: 평균 ${r.avg.toFixed(1)}점으로 낮음 → 보완 자료·실사 확인`));
+            const concerns = pickPhrases(evals, st.users, 'cons');
+            if(discussion.length < 2 && lo && !discussion.some(x => x.startsWith(lo.label)))
+                discussion.push(`${lo.label}: 최저 평가 항목(평균 ${lo.avg.toFixed(1)}) → 보완 근거 확인`);
+            if(discussion.length < 3 && concerns[0]) discussion.push(`우려사항 검증: ${concerns[0]}`);
+
+            return {
+                headline, consensus,
+                strengths:  pickPhrases(evals, st.users, 'pros'),
+                concerns,
+                synergies:  pickPhrases(evals, st.users, 'synergy', 3),
+                discussion: discussion.slice(0, 4),
+                auto: true
+            };
+        }
+
+        const toLines   = arr => (arr || []).join('\n');
+        const fromLines = (txt, max = 4) => String(txt || '').split(/\r?\n/).map(x => x.trim()).filter(Boolean).slice(0, max);
+
+        function fillSummaryForm(sm, isDraft) {
+            document.getElementById('sum-headline').value   = sm.headline || '';
+            document.getElementById('sum-consensus').value  = sm.consensus || '';
+            document.getElementById('sum-strengths').value  = toLines(sm.strengths);
+            document.getElementById('sum-concerns').value   = toLines(sm.concerns);
+            document.getElementById('sum-synergies').value  = toLines(sm.synergies);
+            document.getElementById('sum-discussion').value = toLines(sm.discussion);
+            document.getElementById('sum-meta').textContent = isDraft
+                ? '※ 자동 초안(미저장) — 검토 후 [저장]을 눌러주세요.'
+                : `저장: ${new Date(sm.savedAt).toLocaleString()} · 기준 평가 ${sm.basis?.count ?? '-'}건 · 작성 ${sm.savedBy || ''}`;
+        }
+
+        function openSummaryEditor() {
+            const session = sessionsData[currentSessionId];
+            if(!session) return;
+            if(computeStats(session).count === 0) return alert('제출된 평가가 없습니다.');
+            if(!summaryModal && window.bootstrap) summaryModal = new bootstrap.Modal(document.getElementById('aiSummaryModal'));
+            document.getElementById('ai-modal-sub').textContent = `· ${session.name}`;
+            document.getElementById('sum-stale').classList.toggle('hidden', !aiIsStale(session));
+            const saved = session.reportSummary;
+            fillSummaryForm(saved || buildAutoSummary(session), !saved);
+            summaryModal?.show();
+        }
+
+        async function saveSummary(silent) {
+            const session = sessionsData[currentSessionId];
+            if(!session) return false;
+            const st = computeStats(session);
+            const record = {
+                headline:   document.getElementById('sum-headline').value.trim(),
+                consensus:  document.getElementById('sum-consensus').value.trim(),
+                strengths:  fromLines(document.getElementById('sum-strengths').value),
+                concerns:   fromLines(document.getElementById('sum-concerns').value),
+                synergies:  fromLines(document.getElementById('sum-synergies').value, 3),
+                discussion: fromLines(document.getElementById('sum-discussion').value),
+                savedAt: Date.now(),
+                savedBy: currentUser?.email || '',
+                basis: { count: st.count, latestTs: st.latestTs }
+            };
+            try {
+                // 해당 안건 하위 reportSummary 노드에만 저장 (기존 평가 데이터 변경 없음)
+                await set(ref(db, `sessions/${currentSessionId}/reportSummary`), record);
+                document.getElementById('sum-stale').classList.add('hidden');
+                fillSummaryForm(record, false);
+                renderAiState({ ...session, reportSummary: record });
+                if(!silent) showToast('✅ 종합 요약을 저장했습니다.');
+                return true;
+            } catch(err) {
+                alert('저장 실패: ' + err.message);
+                return false;
+            }
+        }
+
+        // =====================================================================
+        // [V9] 투자심의 결과 1장 요약 PDF (A4)
+        // =====================================================================
+        function loadScriptOnce(src) {
+            return new Promise((resolve, reject) => {
+                if(document.querySelector(`script[src="${src}"]`) && window.html2pdf) return resolve();
+                const sc = document.createElement('script');
+                sc.src = src; sc.onload = resolve; sc.onerror = () => reject(new Error('PDF 라이브러리 로드 실패'));
+                document.head.appendChild(sc);
+            });
+        }
+
+        function radarImage(session, st) {
+            const cv = document.createElement('canvas');
+            cv.width = 600; cv.height = 600;
+            cv.style.width = '300px'; cv.style.height = '300px';
+            const host = document.getElementById('report-host');
+            host.appendChild(cv);
+            const ch = new Chart(cv.getContext('2d'), {
+                type: 'radar',
+                data: { labels: st.rows.map(r => r.label), datasets: [
+                    { label: '평균', data: st.rows.map(r => r.avg), backgroundColor: 'rgba(13,110,253,0.18)', borderColor: '#0d6efd', borderWidth: 3, pointBackgroundColor: '#0d6efd' },
+                    { label: '최저', data: st.rows.map(r => r.min), borderColor: '#adb5bd', borderDash: [4,4], borderWidth: 1.5, fill: false, pointRadius: 0 },
+                    { label: '최고', data: st.rows.map(r => r.max), borderColor: '#6c757d', borderDash: [2,3], borderWidth: 1.5, fill: false, pointRadius: 0 }
+                ]},
+                options: { responsive: false, animation: false, devicePixelRatio: 1,
+                    scales: { r: { min: 0, max: 5, ticks: { stepSize: 1, font: { size: 16 } }, pointLabels: { font: { size: 22, weight: '600' } } } },
+                    plugins: { legend: { position: 'bottom', labels: { font: { size: 18 } } } } }
+            });
+            const url = cv.toDataURL('image/png');
+            ch.destroy(); cv.remove();
+            return url;
+        }
+
+        function buildReportHtml(session, st, ai) {
+            const date   = new Date(session.createdAt).toLocaleDateString();
+            const today  = new Date().toLocaleDateString();
+            const invest = session.investStatus === 'proceed' ? '진행' : session.investStatus === 'noproceed' ? '미진행' : '미정';
+            const chart  = radarImage(session, st);
+            const top    = [...st.rows].sort((a,b) => b.avg - a.avg);
+            const disagree = st.rows.filter(r => r.std >= 1.0).map(r => r.label);
+            const li = arr => (arr || []).filter(Boolean).slice(0, 4).map(x => `<li>${escapeHtml(x)}</li>`).join('') || '<li>-</li>';
+            const aiBlock = ai ? `
+                <div class="rpt-box" style="background:#f5f8ff;border-color:#c9d8f5;">
+                    <h4>종합 의견</h4>
+                    <div style="font-size:13px;font-weight:700;">${escapeHtml(ai.headline || '')}</div>
+                    <div style="color:#495057;">${escapeHtml(ai.consensus || '')}</div>
+                </div>
+                <div class="rpt-2col">
+                    <div class="rpt-box" style="border-left:4px solid #0d6efd;"><h4>투자 포인트</h4><ul>${li(ai.strengths)}</ul></div>
+                    <div class="rpt-box" style="border-left:4px solid #dc3545;"><h4>주요 우려사항</h4><ul>${li(ai.concerns)}</ul></div>
+                    <div class="rpt-box" style="border-left:4px solid #198754;"><h4>기대 시너지</h4><ul>${li(ai.synergies)}</ul></div>
+                    <div class="rpt-box" style="border-left:4px solid #6c757d;"><h4>추가 논의·확인 필요</h4><ul>${li(ai.discussion)}</ul></div>
+                </div>` : `
+                <div class="rpt-box"><h4>정성 의견</h4><div style="color:#6c757d;">제출된 의견이 없습니다.</div></div>`;
+
+            return `<div class="rpt">
+                <div class="rpt-head">
+                    <div><div class="t1">BS INVESTMENT COMMITTEE · 투자심의 결과 요약</div>
+                         <div class="t2">${escapeHtml(session.name)}</div></div>
+                    <div class="t3">구분: ${escapeHtml((session.type || '').toUpperCase())}<br>안건 등록일: ${date}<br>보고서 출력일: ${today}</div>
+                </div>
+                <div class="rpt-kpis">
+                    <div class="rpt-kpi"><div class="k">종합 평가 점수</div><div class="v">${st.totalAvg.toFixed(1)} <span style="font-size:11px;color:#6c757d;">/ 5.0</span></div></div>
+                    <div class="rpt-kpi"><div class="k">참여 위원</div><div class="v">${st.count}명</div></div>
+                    <div class="rpt-kpi"><div class="k">투자 진행 여부</div><div class="v" style="color:${invest==='진행'?'#0d6efd':invest==='미진행'?'#dc3545':'#6c757d'}">${invest}</div></div>
+                    <div class="rpt-kpi"><div class="k">최고 / 최저 평가 항목</div><div class="v" style="font-size:12px;line-height:1.35;">▲ ${escapeHtml(top[0]?.label || '-')}<br>▼ ${escapeHtml(top.at(-1)?.label || '-')}</div></div>
+                </div>
+                <div class="rpt-row">
+                    <div><img src="${chart}" style="width:300px;height:300px;"></div>
+                    <div>
+                        <table>
+                            <thead><tr><th>평가 항목</th><th>평균</th><th>최고</th><th>최저</th><th>편차(σ)</th></tr></thead>
+                            <tbody>${st.rows.map(r => `<tr><td>${escapeHtml(r.label)}</td><td><b>${r.avg.toFixed(1)}</b></td><td>${r.max}</td><td>${r.min}</td>
+                                <td class="${r.std >= 1 ? 'std-flag' : ''}">${r.std.toFixed(2)}</td></tr>`).join('')}</tbody>
+                        </table>
+                        <div style="margin-top:8px;font-size:11px;color:#495057;">
+                            ${disagree.length ? `<b style="color:#dc3545;">의견 편차 큰 항목(σ≥1.0):</b> ${disagree.map(escapeHtml).join(', ')} → 회의 시 집중 논의 권장`
+                                              : '위원 간 항목별 점수 편차가 크지 않습니다 (모든 항목 σ&lt;1.0).'}
+                        </div>
+                    </div>
+                </div>
+                ${aiBlock}
+                <div class="rpt-foot">※ 위원 개인 식별정보는 표기하지 않았으며, 정성 의견은 위원 의견을 익명으로 발췌·정리한 요약입니다.
+                    ${ai?.savedAt ? `(요약 확정: ${new Date(ai.savedAt).toLocaleString()}, 기준 평가 ${ai.basis?.count ?? '-'}건)` : '(자동 초안 기준 · 관리자 미검토)'} 원문 의견은 플랫폼에서 확인할 수 있습니다.</div>
+            </div>`;
+        }
+
+        async function generatePdfReport() {
+            const session = sessionsData[currentSessionId];
+            if(!session) return;
+            const st = computeStats(session);
+            if(st.count === 0) return alert('제출된 평가가 없어 보고서를 만들 수 없습니다.');
+
+            let ai = session.reportSummary || null;
+            if(!ai) {
+                ai = buildAutoSummary(session);   // 저장된 요약이 없으면 자동 초안으로 출력
+            } else if(aiIsStale(session)) {
+                if(!confirm('요약 저장 이후 평가가 변경되었습니다.\n저장된 요약으로 그대로 출력할까요?\n(취소 → [종합 요약 작성·편집]에서 갱신 권장)')) return;
+            }
+
+            const host = document.getElementById('report-host');
+            host.innerHTML = buildReportHtml(session, st, ai);
+            const el = host.querySelector('.rpt');
+            const safeName = String(session.name).replace(/[\\/:*?"<>|]/g, '_').slice(0, 40);
+            const fileName = `투심결과요약_${safeName}_${new Date().toISOString().slice(0,10)}.pdf`;
+
+            try {
+                await loadScriptOnce(HTML2PDF_URL);
+                await window.html2pdf().set({
+                    margin: 0, filename: fileName,
+                    image: { type: 'jpeg', quality: 0.95 },
+                    html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff' },
+                    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+                    pagebreak: { mode: ['avoid-all'] }
+                }).from(el).save();
+                showToast('✅ PDF를 저장했습니다.');
+                setTimeout(() => { host.innerHTML = ''; }, 1500);
+            } catch(err) {
+                console.warn(err);
+                // 대체 경로: 인쇄 → 'PDF로 저장'
+                showToast('인쇄 창에서 [PDF로 저장]을 선택하세요.', 5000);
+                const done = () => { document.body.classList.remove('printing'); host.innerHTML = ''; window.removeEventListener('afterprint', done); };
+                window.addEventListener('afterprint', done);
+                document.body.classList.add('printing');
+                setTimeout(() => window.print(), 200);
             }
         }
 
